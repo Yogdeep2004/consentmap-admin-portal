@@ -74,7 +74,7 @@ const Sidebar = ({ className }: SidebarProps) => {
       </div>
 
       {/* Navigation */}
-      <div className="space-y-1 mb-8 flex-1">
+      <div className="space-y-1 flex-1">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -99,55 +99,59 @@ const Sidebar = ({ className }: SidebarProps) => {
         })}
       </div>
 
-      {/* Quick Stats */}
-      {open && (
-        <div className="border-t border-sidebar-border pt-4 mb-14">
-          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-            Quick Stats
+      {/* Bottom Section */}
+      <div className="mt-auto border-t border-sidebar-border pt-4">
+        {/* Quick Stats */}
+        {open && (
+          <div className="mb-4">
+            <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Quick Stats
+            </div>
+            <div className="space-y-2 px-3">
+              {quickStats.map((stat) => (
+                <div key={stat.label} className="flex justify-between items-center py-1">
+                  <span className="text-xs text-muted-foreground">{stat.label}</span>
+                  <span className="text-sm font-semibold text-foreground">{stat.value}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="space-y-2 px-3">
-            {quickStats.map((stat) => (
-              <div key={stat.label} className="flex justify-between items-center py-1">
-                <span className="text-xs text-muted-foreground">{stat.label}</span>
-                <span className="text-sm font-semibold text-foreground">{stat.value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+        )}
 
-      {/* Settings */}
-      {open && (
+        {/* Settings */}
         <NavLink
           to="/settings"
-          className="flex items-center gap-3 p-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors mb-14"
+          className={cn(
+            "flex items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+            open ? "gap-3 p-2" : "justify-center p-2"
+          )}
         >
           <Settings className="h-4 w-4" />
-          <span className="text-sm font-medium">Settings</span>
+          {open && <span className="text-sm font-medium">Settings</span>}
         </NavLink>
-      )}
 
-      {/* Toggle Button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="absolute bottom-0 left-0 right-0 border-t border-sidebar-border transition-colors hover:bg-muted"
-      >
-        <div className="flex items-center p-3">
-          <div className="grid size-10 place-content-center">
-            <ChevronsRight
-              className={cn(
-                "h-4 w-4 transition-transform duration-300 text-muted-foreground",
-                open && "rotate-180"
-              )}
-            />
+        {/* Toggle Button */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full border-t border-sidebar-border mt-2 transition-colors hover:bg-muted"
+        >
+          <div className="flex items-center p-3">
+            <div className="grid size-10 place-content-center">
+              <ChevronsRight
+                className={cn(
+                  "h-4 w-4 transition-transform duration-300 text-muted-foreground",
+                  open && "rotate-180"
+                )}
+              />
+            </div>
+            {open && (
+              <span className="text-sm font-medium text-muted-foreground">
+                Hide
+              </span>
+            )}
           </div>
-          {open && (
-            <span className="text-sm font-medium text-muted-foreground">
-              Hide
-            </span>
-          )}
-        </div>
-      </button>
+        </button>
+      </div>
     </nav>
   );
 };
