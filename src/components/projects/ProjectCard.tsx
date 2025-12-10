@@ -36,7 +36,7 @@ const ProjectCard = ({
   const getStatusColor = () => {
     switch (status) {
       case "Completed":
-        return "bg-primary/10 text-primary";
+        return "bg-success/10 text-success";
       case "In Progress":
         return "bg-warning/10 text-warning";
       case "Pending":
@@ -47,7 +47,7 @@ const ProjectCard = ({
   };
 
   const getProgressColor = () => {
-    if (progress === 100) return "bg-primary";
+    if (progress === 100) return "bg-success";
     if (progress >= 50) return "bg-warning";
     return "bg-destructive";
   };
@@ -55,7 +55,7 @@ const ProjectCard = ({
   const getStatusDot = () => {
     switch (status) {
       case "Completed":
-        return "bg-primary";
+        return "bg-success";
       case "In Progress":
         return "bg-warning";
       case "Pending":
@@ -96,7 +96,7 @@ const ProjectCard = ({
         <div className="mt-4">
           <div className="flex justify-between items-center mb-1">
             <span className="text-sm text-muted-foreground">Progress</span>
-            <span className={cn("text-sm font-medium", progress === 100 ? "text-primary" : "text-foreground")}>
+            <span className={cn("text-sm font-medium", progress === 100 ? "text-success" : "text-foreground")}>
               {progress}%
             </span>
           </div>
