@@ -1,148 +1,199 @@
 import React from "react";
-import { MoreHorizontal, Image, Users, FileCheck } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MoreHorizontal, Image, Users, FileCheck, Edit, Trash2, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { ProjectProgress } from "@/components/ui/project-progress";
+import { usePermissions } from "@/hooks/use-permissions";
+import { useProjects } from "@/lib/projects";
+import { useToast } from "@/hooks/use-toast";
+import { Project } from "@/lib/types";
+import { formatDistanceToNow } from "date-fns";
 
 interface ProjectCardProps {
-  title: string;
-  description: string;
-  imageUrl: string;
-  status: "Completed" | "In Progress" | "Pending";
-  progress: number;
-  images: number;
-  tagged: number;
-  consents: number;
-  piiTypes: string[];
-  createdDate: string;
-  lastActivity: string;
-  personInCharge: string;
+  project: Project;
 }
 
-const ProjectCard = ({
-  title,
-  description,
-  imageUrl,
-  status,
-  progress,
-  images,
-  tagged,
-  consents,
-  piiTypes,
-  createdDate,
-  lastActivity,
-  personInCharge,
-}: ProjectCardProps) => {
+const ProjectCard = ({ project }: ProjectCardProps) => {
+  const navigate = useNavigate();
+  const { canEdit, canDelete } = usePermissions();
+  const { deleteProject } = useProjects();
+  const { toast } = useToast();
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+
   const getStatusColor = () => {
-    switch (status) {
-      case "Completed":
+    switch (project.status) {
+      case "completed":
         return "bg-success/10 text-success";
-      case "In Progress":
+      case "active":
+        return "bg-primary/10 text-primary";
+      case "on-hold":
         return "bg-warning/10 text-warning";
-      case "Pending":
-        return "bg-destructive/10 text-destructive";
       default:
         return "bg-muted text-muted-foreground";
     }
   };
 
-  const getProgressColor = () => {
-    if (progress === 100) return "bg-success";
-    if (progress >= 50) return "bg-warning";
-    return "bg-destructive";
-  };
-
   const getStatusDot = () => {
-    switch (status) {
-      case "Completed":
+    switch (project.status) {
+      case "completed":
         return "bg-success";
-      case "In Progress":
+      case "active":
+        return "bg-primary";
+      case "on-hold":
         return "bg-warning";
-      case "Pending":
-        return "bg-destructive";
       default:
         return "bg-muted-foreground";
     }
   };
 
+  const progress = project.estimatedImageCount > 0
+    ? Math.min(100, Math.round(((project.persons.length + project.dataEntries.length) / project.estimatedImageCount) * 100))
+    : 0;
+
+  const getProgressColor = () => {
+    if (progress === 100) return "bg-success";
+    if (progress >= 50) return "bg-primary";
+    return "bg-warning";
+  };
+
+  const handleDelete = () => {
+    deleteProject(project.id);
+    toast({ title: "Project deleted" });
+    setDeleteDialogOpen(false);
+  };
+
+  const handleCardClick = () => {
+    navigate(`/project/${project.id}`);
+  };
+
   return (
-    <div className="bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden animate-fade-in">
-      {/* Image */}
-      <div className="relative h-40 overflow-hidden">
-        <img
-          src={imageUrl}
-          alt={title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute top-3 right-3 flex items-center gap-2">
-          <span className={cn("w-2.5 h-2.5 rounded-full", getStatusDot())} />
-          <Button variant="ghost" size="icon" className="h-7 w-7 bg-card/80 backdrop-blur-sm">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        <h3 className="font-semibold text-foreground text-lg mb-1">{title}</h3>
-        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{description}</p>
-        <p className="text-xs text-muted-foreground mb-2">{personInCharge}</p>
-        
-        <Badge className={cn("text-xs", getStatusColor())} variant="secondary">
-          {status}
-        </Badge>
-
-        {/* Progress */}
-        <div className="mt-4">
-          <div className="flex justify-between items-center mb-1">
-            <span className="text-sm text-muted-foreground">Progress</span>
-            <span className={cn("text-sm font-medium", progress === 100 ? "text-success" : "text-foreground")}>
-              {progress}%
-            </span>
+    <>
+      <div 
+        className="bg-card rounded-xl border border-border shadow-sm hover:shadow-md transition-shadow overflow-hidden animate-fade-in cursor-pointer"
+        onClick={handleCardClick}
+      >
+        {/* Header with gradient */}
+        <div className="relative h-24 bg-gradient-to-br from-primary/20 to-primary/5 p-4">
+          <div className="absolute top-3 right-3 flex items-center gap-2">
+            <span className={cn("w-2.5 h-2.5 rounded-full", getStatusDot())} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                <Button variant="ghost" size="icon" className="h-7 w-7 bg-card/80 backdrop-blur-sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem onClick={() => navigate(`/project/${project.id}`)}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  View
+                </DropdownMenuItem>
+                {canEdit ? (
+                  <DropdownMenuItem onClick={() => navigate(`/project/${project.id}`)}>
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem disabled>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent>Admins can edit or delete</TooltipContent>
+                  </Tooltip>
+                )}
+                {canDelete && (
+                  <DropdownMenuItem 
+                    className="text-destructive"
+                    onClick={() => setDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className={cn("h-full rounded-full transition-all", getProgressColor())}
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-border">
-          <div className="text-center">
-            <Image className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-            <p className="text-lg font-semibold text-foreground">{images.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Images</p>
-          </div>
-          <div className="text-center">
-            <Users className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-            <p className="text-lg font-semibold text-foreground">{tagged.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Tagged</p>
-          </div>
-          <div className="text-center">
-            <FileCheck className="h-4 w-4 mx-auto text-muted-foreground mb-1" />
-            <p className="text-lg font-semibold text-foreground">{consents}</p>
-            <p className="text-xs text-muted-foreground">Consents</p>
-          </div>
-        </div>
-
-        {/* PII Types */}
-        <div className="flex flex-wrap gap-1 mt-4">
-          {piiTypes.map((type) => (
-            <Badge key={type} variant="outline" className="text-xs">
-              {type}
+          <div className="absolute bottom-3 left-4">
+            <Badge className={cn("text-xs", getStatusColor())} variant="secondary">
+              {project.status}
             </Badge>
-          ))}
+          </div>
         </div>
 
-        {/* Dates */}
-        <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-          <p>Created: {createdDate}</p>
-          <p>Last activity: {lastActivity}</p>
+        {/* Content */}
+        <div className="p-4">
+          <h3 className="font-semibold text-foreground text-lg mb-1 line-clamp-1">{project.name}</h3>
+          {project.description && (
+            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{project.description}</p>
+          )}
+          <p className="text-xs text-muted-foreground mb-3">{project.owner}</p>
+
+          {/* Progress */}
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-sm text-muted-foreground">Progress</span>
+              <span className={cn("text-sm font-medium", progress === 100 ? "text-success" : "text-foreground")}>
+                {progress}%
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className={cn("h-full rounded-full transition-all", getProgressColor())}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Quick Stats */}
+          <ProjectProgress project={project} compact />
+
+          {/* Dates */}
+          <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+            <p>Created: {formatDistanceToNow(project.createdAt, { addSuffix: true })}</p>
+            <p>Last activity: {formatDistanceToNow(project.updatedAt, { addSuffix: true })}</p>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Delete Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Project</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete "{project.name}" and all its data. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 };
 

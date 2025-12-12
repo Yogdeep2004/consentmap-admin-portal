@@ -11,78 +11,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ProjectCard from "@/components/projects/ProjectCard";
-
-const mockProjects = [
-  {
-    id: 1,
-    title: "Event Photography 2024",
-    description: "Annual company event photography with consent tracking for all attendees",
-    imageUrl: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=400&h=200&fit=crop",
-    status: "Completed" as const,
-    progress: 100,
-    images: 1250,
-    tagged: 1250,
-    consents: 89,
-    piiTypes: ["Face", "Document"],
-    createdDate: "15/01/2024",
-    lastActivity: "20/01/2024",
-    personInCharge: "John Doe",
-  },
-  {
-    id: 2,
-    title: "Corporate Headshots Q1",
-    description: "Professional headshots for company directory and marketing materials",
-    imageUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=200&fit=crop",
-    status: "In Progress" as const,
-    progress: 70,
-    images: 500,
-    tagged: 350,
-    consents: 45,
-    piiTypes: ["Face"],
-    createdDate: "10/01/2024",
-    lastActivity: "25/01/2024",
-    personInCharge: "Jane Smith",
-  },
-  {
-    id: 3,
-    title: "Conference Documentation",
-    description: "Tech conference with speakers and attendee documentation requiring consent management",
-    imageUrl: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=200&fit=crop",
-    status: "Pending" as const,
-    progress: 100,
-    images: 800,
-    tagged: 800,
-    consents: 62,
-    piiTypes: ["Face", "Document", "Biometric"],
-    createdDate: "08/01/2024",
-    lastActivity: "23/01/2024",
-    personInCharge: "Mike Johnson",
-  },
-  {
-    id: 4,
-    title: "Training Workshop Series",
-    description: "Internal training sessions documentation for HR compliance and records",
-    imageUrl: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=200&fit=crop",
-    status: "In Progress" as const,
-    progress: 45,
-    images: 320,
-    tagged: 144,
-    consents: 28,
-    piiTypes: ["Face", "Document"],
-    createdDate: "05/01/2024",
-    lastActivity: "22/01/2024",
-    personInCharge: "Sarah Wilson",
-  },
-];
+import { useProjects } from "@/lib/projects";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { projects } = useProjects();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
-  const filteredProjects = mockProjects.filter((project) => {
-    const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || project.status.toLowerCase().replace(" ", "-") === statusFilter;
+  const filteredProjects = projects.filter((project) => {
+    const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || project.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -117,8 +56,8 @@ const Dashboard = () => {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="in-progress">In Progress</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="on-hold">On Hold</SelectItem>
           </SelectContent>
         </Select>
 
@@ -131,7 +70,7 @@ const Dashboard = () => {
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {filteredProjects.map((project) => (
-          <ProjectCard key={project.id} {...project} />
+          <ProjectCard key={project.id} project={project} />
         ))}
       </div>
 

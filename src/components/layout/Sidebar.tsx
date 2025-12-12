@@ -1,14 +1,19 @@
 import React, { useState } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
   FolderKanban, 
   FilePlus, 
   User, 
   Eraser,
   ChevronsRight,
-  Settings
+  Settings,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
+import { useProjects } from "@/lib/projects";
+import { RoleBadge } from "@/components/ui/role-badge";
+import { Button } from "@/components/ui/button";
 
 interface SidebarProps {
   className?: string;
@@ -17,6 +22,9 @@ interface SidebarProps {
 const Sidebar = ({ className }: SidebarProps) => {
   const [open, setOpen] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+  const { projects } = useProjects();
 
   const navItems = [
     { icon: FolderKanban, title: "Projects", path: "/dashboard" },
@@ -25,12 +33,25 @@ const Sidebar = ({ className }: SidebarProps) => {
     { icon: Eraser, title: "Redaction Module", path: "/redaction" },
   ];
 
+  // Dynamic stats from projects
+  const activeProjects = projects.filter((p) => p.status === "active").length;
+  const totalPersons = projects.reduce((acc, p) => acc + p.persons.length, 0);
+  const totalImages = projects.reduce((acc, p) => acc + p.images.length, 0);
+
   const quickStats = [
-    { label: "Active Projects", value: "12" },
-    { label: "Pending Requests", value: "5" },
-    { label: "Total PIDs", value: "1,247" },
-    { label: "Redacted Images", value: "3,892" },
+    { label: "Active Projects", value: activeProjects.toString() },
+    { label: "Total Persons", value: totalPersons.toLocaleString() },
+    { label: "Total Images", value: totalImages.toLocaleString() },
   ];
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  const userInitials = user?.name
+    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "??";
 
   return (
     <nav
@@ -60,15 +81,28 @@ const Sidebar = ({ className }: SidebarProps) => {
         </div>
 
         {/* User Info */}
-        {open && (
-          <div className="flex items-center gap-3 p-2 mt-2 rounded-md bg-muted/50">
-            <div className="size-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium text-sm">
-              AU
+        {user && (
+          <div className={cn(
+            "flex items-center gap-3 p-2 mt-2 rounded-md bg-muted/50",
+            !open && "justify-center"
+          )}>
+            <div className={cn(
+              "size-8 rounded-full flex items-center justify-center font-medium text-sm",
+              user.role === "admin" ? "bg-amber-500/20 text-amber-600" : "bg-primary/10 text-primary"
+            )}>
+              {userInitials}
             </div>
-            <div>
-              <span className="block text-sm font-medium text-foreground">Admin User</span>
-              <span className="block text-xs text-muted-foreground">admin@company.com</span>
-            </div>
+            {open && (
+              <div className="flex-1 min-w-0">
+                <span className="block text-sm font-medium text-foreground truncate">{user.name}</span>
+                <div className="flex items-center gap-2">
+                  <span className="block text-xs text-muted-foreground truncate">{user.email}</span>
+                </div>
+                <div className="mt-1">
+                  <RoleBadge role={user.role} />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -129,6 +163,19 @@ const Sidebar = ({ className }: SidebarProps) => {
           <Settings className="h-4 w-4" />
           {open && <span className="text-sm font-medium">Settings</span>}
         </NavLink>
+
+        {/* Logout Button */}
+        <Button
+          variant="ghost"
+          onClick={handleLogout}
+          className={cn(
+            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            open ? "justify-start gap-3 px-2" : "justify-center px-2"
+          )}
+        >
+          <LogOut className="h-4 w-4" />
+          {open && <span className="text-sm font-medium">Logout</span>}
+        </Button>
 
         {/* Toggle Button */}
         <button
