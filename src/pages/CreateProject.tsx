@@ -9,10 +9,15 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FileUpload } from "@/components/ui/file-upload";
 import { toast } from "@/hooks/use-toast";
+import { useProjects } from "@/lib/projects";
+import { useAuth } from "@/lib/auth";
 
 const CreateProject = () => {
   const navigate = useNavigate();
+  const { createProject } = useProjects();
+  const { user } = useAuth();
   const [projectName, setProjectName] = useState("");
+  const [description, setDescription] = useState("");
   const [imageCount, setImageCount] = useState("");
   const [projectInCharge, setProjectInCharge] = useState("");
   const [piiTypes, setPiiTypes] = useState<string[]>([]);
@@ -48,11 +53,20 @@ const CreateProject = () => {
       return;
     }
 
+    const newProject = createProject({
+      name: projectName.trim(),
+      description: description.trim() || notes.trim() || undefined,
+      owner: user?.email || "unknown",
+      estimatedImageCount: parseInt(imageCount) || 0,
+      status: "active",
+    });
+
     toast({
       title: "Success",
       description: "Project created successfully!",
     });
-    navigate("/dashboard");
+    
+    navigate(`/project/${newProject.id}`);
   };
 
   const teamMembers = [
@@ -116,6 +130,18 @@ const CreateProject = () => {
                 onChange={(e) => setImageCount(e.target.value)}
               />
             </div>
+          </div>
+
+          {/* Description */}
+          <div className="mt-6 space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <Textarea
+              id="description"
+              placeholder="Project description..."
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+            />
           </div>
 
           {/* Project In-charge */}
