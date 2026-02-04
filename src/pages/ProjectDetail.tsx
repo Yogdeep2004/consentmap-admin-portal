@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,6 +29,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ProjectProgress } from "@/components/ui/project-progress";
 import { ProjectTimeline } from "@/components/ui/project-timeline";
+import { ProjectStatusPanel } from "@/components/ui/project-status-panel";
+import { ConsentExcelTable } from "@/components/ui/consent-excel-table";
 import { AddPersonModal } from "@/components/ui/add-person-modal";
 import { AddImagesModal } from "@/components/ui/add-images-modal";
 import { AddDataModal } from "@/components/ui/add-data-modal";
@@ -46,14 +49,15 @@ import {
   Image,
   FileText,
   MoreVertical,
+  Table,
 } from "lucide-react";
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProject, updateProject, deleteProject, addPerson, addImage, addDataEntry, addEvent, clearEvents, deletePerson, deleteImage, deleteDataEntry } = useProjects();
+  const { getProject, updateProject, deleteProject, addPerson, updatePerson, addImage, addGroupImage, addDataEntry, addEvent, clearEvents, deletePerson, deleteImage, deleteGroupImage, deleteDataEntry } = useProjects();
   const { user } = useAuth();
-  const { canEdit, canDelete } = usePermissions();
+  const { canEdit, canDelete, canEditConsent } = usePermissions();
   const { toast } = useToast();
 
   const project = getProject(id || "");
@@ -64,7 +68,7 @@ const ProjectDetail = () => {
   const [addDataOpen, setAddDataOpen] = useState(false);
   const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<{ type: "person" | "image" | "data"; id: string } | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<{ type: "person" | "image" | "groupImage" | "data"; id: string } | null>(null);
 
   if (!project) {
     return (
@@ -75,7 +79,7 @@ const ProjectDetail = () => {
     );
   }
 
-  const handleAddPerson = (data: { name: string; pid?: string; notes?: string; consentFiles: string[] }) => {
+  const handleAddPerson = (data: { name: string; pid?: string; notes?: string; consentFiles: string[]; consentMatched: boolean }) => {
     addPerson(project.id, {
       ...data,
       addedBy: user?.email || "unknown",
@@ -84,6 +88,15 @@ const ProjectDetail = () => {
       type: "person_added",
       user: user?.email || "unknown",
       description: `Added ${data.name}`,
+    });
+  };
+
+  const handleEditPerson = (personId: string, data: Partial<typeof project.persons[0]>) => {
+    updatePerson(project.id, personId, data);
+    addEvent(project.id, {
+      type: "edited",
+      user: user?.email || "unknown",
+      description: `Updated consent status`,
     });
   };
 
@@ -148,6 +161,14 @@ const ProjectDetail = () => {
         user: user?.email || "unknown",
         description: `Deleted image: ${image?.name}`,
       });
+    } else if (itemToDelete.type === "groupImage") {
+      const image = project.groupImages.find((i) => i.id === itemToDelete.id);
+      deleteGroupImage(project.id, itemToDelete.id);
+      addEvent(project.id, {
+        type: "deleted",
+        user: user?.email || "unknown",
+        description: `Deleted group image: ${image?.name}`,
+      });
     } else {
       const entry = project.dataEntries.find((e) => e.id === itemToDelete.id);
       deleteDataEntry(project.id, itemToDelete.id);
@@ -181,7 +202,7 @@ const ProjectDetail = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between">
         <div className="space-y-1">
@@ -197,6 +218,9 @@ const ProjectDetail = () => {
           {project.description && (
             <p className="text-muted-foreground ml-12">{project.description}</p>
           )}
+          <p className="text-sm text-muted-foreground ml-12">
+            Created by: {project.createdBy || project.owner}
+          </p>
         </div>
 
         {/* Action Toolbar */}
@@ -250,151 +274,257 @@ const ProjectDetail = () => {
         </div>
       </div>
 
-      {/* Progress Card */}
-      <Card>
-        <CardContent className="pt-6">
-          <ProjectProgress project={project} />
-        </CardContent>
-      </Card>
-
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Persons Panel */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Persons ({project.persons.length})
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setAddPersonOpen(true)}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                {project.persons.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No persons added yet</p>
-                ) : (
-                  project.persons.map((person) => (
-                    <div key={person.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                      <div>
-                        <p className="text-sm font-medium">{person.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {person.pid && `${person.pid} • `}
-                          {person.consentFiles.length > 0 ? "Consent ✓" : "No consent"}
-                        </p>
-                      </div>
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setItemToDelete({ type: "person", id: person.id })}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
+      {/* Status and Progress Row */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="md:col-span-2">
+          <CardContent className="pt-6">
+            <ProjectProgress project={project} />
           </CardContent>
         </Card>
-
-        {/* Images Panel */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-base font-medium flex items-center gap-2">
-              <Image className="h-4 w-4" />
-              Images ({project.images.length})
-            </CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setAddImagesOpen(true)}>
-              <Plus className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[300px]">
-              <div className="space-y-2">
-                {project.images.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">No images uploaded yet</p>
-                ) : (
-                  project.images.map((image) => (
-                    <div key={image.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                      <div>
-                        <p className="text-sm font-medium truncate max-w-[180px]">{image.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(image.size / 1024).toFixed(1)} KB • {formatDistanceToNow(image.timestamp, { addSuffix: true })}
-                        </p>
-                      </div>
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setItemToDelete({ type: "image", id: image.id })}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
-
-        {/* Timeline Panel */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-medium">Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ProjectTimeline events={project.events} onClearHistory={handleClearHistory} />
-          </CardContent>
-        </Card>
+        <ProjectStatusPanel persons={project.persons} />
       </div>
 
-      {/* Data Entries */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-base font-medium flex items-center gap-2">
-            <FileText className="h-4 w-4" />
-            Data Entries ({project.dataEntries.length})
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setAddDataOpen(true)}>
-            <Plus className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {project.dataEntries.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-8">No data entries yet</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-              {project.dataEntries.map((entry) => (
-                <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                  <div>
-                    <p className="text-xs text-muted-foreground">{entry.key}</p>
-                    <p className="text-sm font-medium">{entry.value}</p>
+      {/* Main Content Tabs */}
+      <Tabs defaultValue="consent" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="consent" className="gap-2">
+            <Table className="h-4 w-4" />
+            Consent Table
+          </TabsTrigger>
+          <TabsTrigger value="overview" className="gap-2">
+            <Users className="h-4 w-4" />
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="images" className="gap-2">
+            <Image className="h-4 w-4" />
+            Images
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Consent Excel Table Tab */}
+        <TabsContent value="consent">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Consent Tracking
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ConsentExcelTable
+                persons={project.persons}
+                onEditPerson={canEditConsent ? handleEditPerson : undefined}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Persons Panel */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Persons ({project.persons.length})
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setAddPersonOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2">
+                    {project.persons.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">No persons added yet</p>
+                    ) : (
+                      project.persons.map((person) => (
+                        <div key={person.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                          <div>
+                            <p className="text-sm font-medium">{person.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {person.pid && `${person.pid} • `}
+                              {person.consentMatched ? "✓ Matched" : "✗ Not matched"}
+                            </p>
+                          </div>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setItemToDelete({ type: "person", id: person.id })}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
-                  {canDelete && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setItemToDelete({ type: "data", id: entry.id })}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Data Entries Panel */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Data ({project.dataEntries.length})
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setAddDataOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2">
+                    {project.dataEntries.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">No data entries yet</p>
+                    ) : (
+                      project.dataEntries.map((entry) => (
+                        <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                          <div>
+                            <p className="text-xs text-muted-foreground">{entry.key}</p>
+                            <p className="text-sm font-medium">{entry.value}</p>
+                          </div>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setItemToDelete({ type: "data", id: entry.id })}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Timeline Panel */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base font-medium">Activity</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProjectTimeline events={project.events} onClearHistory={handleClearHistory} />
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Images Tab */}
+        <TabsContent value="images">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Single Person Images */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <Image className="h-4 w-4" />
+                  Photos ({project.images.length})
+                </CardTitle>
+                <Button variant="ghost" size="sm" onClick={() => setAddImagesOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2">
+                    {project.images.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">No images uploaded yet</p>
+                    ) : (
+                      project.images.map((image) => (
+                        <div key={image.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                          <div className="flex items-center gap-3">
+                            {image.url ? (
+                              <img src={image.url} alt={image.name} className="h-10 w-10 rounded object-cover" />
+                            ) : (
+                              <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                                <Image className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium truncate max-w-[180px]">{image.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(image.size / 1024).toFixed(1)} KB • {formatDistanceToNow(image.timestamp, { addSuffix: true })}
+                              </p>
+                            </div>
+                          </div>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setItemToDelete({ type: "image", id: image.id })}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+
+            {/* Group Images */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-base font-medium flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Group Photos ({project.groupImages.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-2">
+                    {project.groupImages.length === 0 ? (
+                      <p className="text-sm text-muted-foreground text-center py-8">No group photos uploaded yet</p>
+                    ) : (
+                      project.groupImages.map((image) => (
+                        <div key={image.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                          <div className="flex items-center gap-3">
+                            {image.url ? (
+                              <img src={image.url} alt={image.name} className="h-10 w-10 rounded object-cover" />
+                            ) : (
+                              <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                                <Users className="h-5 w-5 text-muted-foreground" />
+                              </div>
+                            )}
+                            <div>
+                              <p className="text-sm font-medium truncate max-w-[180px]">{image.name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {(image.size / 1024).toFixed(1)} KB • {formatDistanceToNow(image.timestamp, { addSuffix: true })}
+                              </p>
+                            </div>
+                          </div>
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setItemToDelete({ type: "groupImage", id: image.id })}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Modals */}
       <AddPersonModal open={addPersonOpen} onOpenChange={setAddPersonOpen} onSubmit={handleAddPerson} />
@@ -426,7 +556,7 @@ const ProjectDetail = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Item</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this {itemToDelete?.type}? This action cannot be undone.
+              Are you sure you want to delete this {itemToDelete?.type === "groupImage" ? "group image" : itemToDelete?.type}? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

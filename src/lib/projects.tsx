@@ -8,12 +8,16 @@ interface ProjectsContextType {
   deleteProject: (id: string) => void;
   getProject: (id: string) => Project | undefined;
   addPerson: (projectId: string, person: Omit<Person, "id" | "timestamp">) => void;
+  updatePerson: (projectId: string, personId: string, data: Partial<Person>) => void;
   addImage: (projectId: string, image: Omit<ImageFile, "id" | "timestamp">) => void;
+  addGroupImage: (projectId: string, image: Omit<ImageFile, "id" | "timestamp">) => void;
+  addConsentForm: (projectId: string, file: Omit<ImageFile, "id" | "timestamp">) => void;
   addDataEntry: (projectId: string, entry: Omit<DataEntry, "id" | "timestamp">) => void;
   addEvent: (projectId: string, event: Omit<ProjectEvent, "id" | "timestamp">) => void;
   clearEvents: (projectId: string) => void;
   deletePerson: (projectId: string, personId: string) => void;
   deleteImage: (projectId: string, imageId: string) => void;
+  deleteGroupImage: (projectId: string, imageId: string) => void;
   deleteDataEntry: (projectId: string, entryId: string) => void;
 }
 
@@ -31,15 +35,23 @@ const createDemoProjects = (): Project[] => [
     name: "Marketing Campaign 2024",
     description: "Consent collection for Q1 marketing materials",
     owner: "admin@example.com",
+    createdBy: "Admin User",
     estimatedImageCount: 50,
     status: "active",
     images: [
       { id: "img-1", name: "hero-banner.jpg", size: 245000, uploadedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
       { id: "img-2", name: "product-shot.png", size: 180000, uploadedBy: "user@example.com", timestamp: Date.now() - 43200000 },
     ],
+    groupImages: [
+      { id: "gimg-1", name: "team-celebration.jpg", size: 380000, uploadedBy: "admin@example.com", timestamp: Date.now() - 72000000 },
+    ],
+    consentForms: [
+      { id: "cf-1", name: "consent-template.pdf", size: 125000, uploadedBy: "admin@example.com", timestamp: Date.now() - 172800000 },
+    ],
     persons: [
-      { id: "per-1", name: "John Doe", pid: "PID-001", consentFiles: ["consent-john.pdf"], notes: "Full consent granted", addedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
-      { id: "per-2", name: "Jane Smith", pid: "PID-002", consentFiles: ["consent-jane.pdf"], addedBy: "user@example.com", timestamp: Date.now() - 43200000 },
+      { id: "per-1", name: "John Doe", pid: "PID-001", consentFiles: ["consent-john.pdf"], consentMatched: true, notes: "Full consent granted", addedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
+      { id: "per-2", name: "Jane Smith", pid: "PID-002", consentFiles: ["consent-jane.pdf"], consentMatched: true, addedBy: "user@example.com", timestamp: Date.now() - 43200000 },
+      { id: "per-3", name: "Mike Johnson", pid: "PID-003", consentFiles: [], consentMatched: false, addedBy: "admin@example.com", timestamp: Date.now() - 36000000 },
     ],
     dataEntries: [
       { id: "data-1", key: "Campaign Type", value: "Digital", addedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
@@ -58,11 +70,15 @@ const createDemoProjects = (): Project[] => [
     name: "Product Launch Event",
     description: "Photo consent for annual product launch",
     owner: "user@example.com",
+    createdBy: "Demo User",
     estimatedImageCount: 100,
     status: "active",
     images: [],
+    groupImages: [],
+    consentForms: [],
     persons: [
-      { id: "per-3", name: "Bob Wilson", consentFiles: [], addedBy: "user@example.com", timestamp: Date.now() - 3600000 },
+      { id: "per-4", name: "Bob Wilson", consentFiles: [], consentMatched: false, addedBy: "user@example.com", timestamp: Date.now() - 3600000 },
+      { id: "per-5", name: "Sarah Connor", pid: "EMP-042", consentFiles: ["consent-sarah.pdf"], consentMatched: true, addedBy: "user@example.com", timestamp: Date.now() - 7200000 },
     ],
     dataEntries: [],
     events: [
@@ -77,13 +93,20 @@ const createDemoProjects = (): Project[] => [
     name: "Annual Report 2023",
     description: "Employee photo consents for annual report",
     owner: "admin@example.com",
+    createdBy: "Admin User",
     estimatedImageCount: 30,
     status: "completed",
     images: [
       { id: "img-3", name: "team-photo.jpg", size: 520000, uploadedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
     ],
+    groupImages: [
+      { id: "gimg-2", name: "all-hands-meeting.jpg", size: 890000, uploadedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
+    ],
+    consentForms: [
+      { id: "cf-2", name: "employee-consent-form.xlsx", size: 45000, uploadedBy: "admin@example.com", timestamp: Date.now() - 1209600000 },
+    ],
     persons: [
-      { id: "per-4", name: "Alice Brown", pid: "EMP-101", consentFiles: ["consent-alice.pdf"], addedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
+      { id: "per-6", name: "Alice Brown", pid: "EMP-101", consentFiles: ["consent-alice.pdf"], consentMatched: true, addedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
     ],
     dataEntries: [
       { id: "data-2", key: "Department", value: "Engineering", addedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
@@ -131,9 +154,12 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       name: data.name || "Untitled Project",
       description: data.description,
       owner: data.owner || "unknown",
+      createdBy: data.createdBy || "unknown",
       estimatedImageCount: data.estimatedImageCount || 0,
       status: data.status || "active",
-      images: [],
+      images: data.images || [],
+      groupImages: data.groupImages || [],
+      consentForms: data.consentForms || [],
       persons: [],
       dataEntries: [],
       events: [{
@@ -181,6 +207,22 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const updatePerson = (projectId: string, personId: string, data: Partial<Person>) => {
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId
+          ? {
+              ...p,
+              persons: p.persons.map((per) =>
+                per.id === personId ? { ...per, ...data } : per
+              ),
+              updatedAt: Date.now(),
+            }
+          : p
+      )
+    );
+  };
+
   const addImage = (projectId: string, image: Omit<ImageFile, "id" | "timestamp">) => {
     const newImage: ImageFile = {
       ...image,
@@ -192,6 +234,38 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
       prev.map((p) =>
         p.id === projectId
           ? { ...p, images: [...p.images, newImage], updatedAt: Date.now() }
+          : p
+      )
+    );
+  };
+
+  const addGroupImage = (projectId: string, image: Omit<ImageFile, "id" | "timestamp">) => {
+    const newImage: ImageFile = {
+      ...image,
+      id: generateId(),
+      timestamp: Date.now(),
+    };
+
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId
+          ? { ...p, groupImages: [...p.groupImages, newImage], updatedAt: Date.now() }
+          : p
+      )
+    );
+  };
+
+  const addConsentForm = (projectId: string, file: Omit<ImageFile, "id" | "timestamp">) => {
+    const newFile: ImageFile = {
+      ...file,
+      id: generateId(),
+      timestamp: Date.now(),
+    };
+
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId
+          ? { ...p, consentForms: [...p.consentForms, newFile], updatedAt: Date.now() }
           : p
       )
     );
@@ -257,6 +331,16 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     );
   };
 
+  const deleteGroupImage = (projectId: string, imageId: string) => {
+    setProjects((prev) =>
+      prev.map((p) =>
+        p.id === projectId
+          ? { ...p, groupImages: p.groupImages.filter((img) => img.id !== imageId), updatedAt: Date.now() }
+          : p
+      )
+    );
+  };
+
   const deleteDataEntry = (projectId: string, entryId: string) => {
     setProjects((prev) =>
       prev.map((p) =>
@@ -276,12 +360,16 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
         deleteProject,
         getProject,
         addPerson,
+        updatePerson,
         addImage,
+        addGroupImage,
+        addConsentForm,
         addDataEntry,
         addEvent,
         clearEvents,
         deletePerson,
         deleteImage,
+        deleteGroupImage,
         deleteDataEntry,
       }}
     >

@@ -9,6 +9,8 @@ export function usePermissions() {
     canAdd: true, // Both roles can add
     canUpload: true, // Both roles can upload
     canClearHistory: user?.role === "admin",
+    canViewLoginHistory: user?.role === "admin",
+    canEditConsent: user?.role === "admin",
     isAdmin: user?.role === "admin",
     isUser: user?.role === "user",
   };

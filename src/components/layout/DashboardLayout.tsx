@@ -3,17 +3,13 @@ import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import { useAuth } from "@/lib/auth";
 import { RoleBadge } from "@/components/ui/role-badge";
+import { AdminHeaderMenu } from "@/components/ui/admin-header-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 
 const DashboardLayout = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
 
   return (
     <div className="flex min-h-screen w-full bg-background">
@@ -29,15 +25,7 @@ const DashboardLayout = () => {
             <Button variant="ghost" size="icon" className="h-9 w-9">
               <Bell className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="gap-2 text-muted-foreground hover:text-destructive"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </Button>
+            <AdminHeaderMenu />
           </div>
         </header>
         <main className="flex-1">
