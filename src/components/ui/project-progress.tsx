@@ -10,7 +10,8 @@ interface ProjectProgressProps {
 export function ProjectProgress({ project, compact = false }: ProjectProgressProps) {
   const totalEntries = project.persons.length + project.dataEntries.length;
   const consentsCount = project.persons.filter((p) => p.consentFiles.length > 0).length;
-  const imagesCount = project.images.length;
+  const matchedCount = project.persons.filter((p) => p.consentMatched).length;
+  const imagesCount = project.images.length + (project.groupImages?.length || 0);
 
   const progress = project.estimatedImageCount > 0
     ? Math.min(100, Math.round((totalEntries / project.estimatedImageCount) * 100))

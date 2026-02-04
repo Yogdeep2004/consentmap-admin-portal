@@ -7,11 +7,31 @@ export interface User {
   role: UserRole;
 }
 
+// Auth Event Types (for login history tracking)
+export interface AuthEvent {
+  id: string;
+  userEmail: string;
+  userName: string;
+  role: UserRole;
+  timestamp: number;
+  type: "login" | "logout" | "signup";
+}
+
+// Registered User (for signup persistence)
+export interface RegisteredUser {
+  name: string;
+  email: string;
+  password: string; // NOTE: In production, passwords must be hashed and stored server-side
+  role: UserRole;
+  createdAt: number;
+}
+
 // Project Types
 export interface ImageFile {
   id: string;
   name: string;
   size: number;
+  url?: string; // Object URL for preview (demo only - production should use backend storage)
   uploadedBy: string;
   timestamp: number;
 }
@@ -21,6 +41,7 @@ export interface Person {
   name: string;
   pid?: string;
   consentFiles: string[]; // Store file names, not File objects for localStorage
+  consentMatched: boolean; // Whether consent is verified/matched
   notes?: string;
   addedBy: string;
   timestamp: number;
@@ -47,9 +68,12 @@ export interface Project {
   name: string;
   description?: string;
   owner: string;
+  createdBy: string; // Username of the person who created the project
   estimatedImageCount: number;
   status: "active" | "completed" | "on-hold";
-  images: ImageFile[];
+  images: ImageFile[]; // Single-person photos
+  groupImages: ImageFile[]; // Multi-person/group photos
+  consentForms: ImageFile[]; // Consent form PDFs/Excel files
   persons: Person[];
   dataEntries: DataEntry[];
   events: ProjectEvent[];

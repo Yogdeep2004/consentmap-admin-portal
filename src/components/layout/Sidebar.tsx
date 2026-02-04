@@ -7,11 +7,14 @@ import {
   Eraser,
   ChevronsRight,
   Settings,
-  LogOut
+  LogOut,
+  History,
+  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
 import { useProjects } from "@/lib/projects";
+import { usePermissions } from "@/hooks/use-permissions";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Button } from "@/components/ui/button";
 
@@ -25,18 +28,30 @@ const Sidebar = ({ className }: SidebarProps) => {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
   const { projects } = useProjects();
+  const { canViewLoginHistory } = usePermissions();
 
   const navItems = [
     { icon: FolderKanban, title: "Projects", path: "/dashboard" },
     { icon: FilePlus, title: "Create Project", path: "/create-project" },
     { icon: User, title: "Person Dashboard", path: "/person-dashboard" },
     { icon: Eraser, title: "Redaction Module", path: "/redaction" },
+    // Admin-only items will be added conditionally below
+  ];
+
+  // Add admin-only nav items
+  const adminNavItems = canViewLoginHistory ? [
+    { icon: History, title: "Login History", path: "/login-history" },
+  ] : [];
+
+  // Demo pages
+  const demoNavItems = [
+    { icon: Users, title: "Contributors Demo", path: "/demo-contributors" },
   ];
 
   // Dynamic stats from projects
   const activeProjects = projects.filter((p) => p.status === "active").length;
   const totalPersons = projects.reduce((acc, p) => acc + p.persons.length, 0);
-  const totalImages = projects.reduce((acc, p) => acc + p.images.length, 0);
+  const totalImages = projects.reduce((acc, p) => acc + p.images.length + (p.groupImages?.length || 0), 0);
 
   const quickStats = [
     { label: "Active Projects", value: activeProjects.toString() },
@@ -110,6 +125,68 @@ const Sidebar = ({ className }: SidebarProps) => {
       {/* Navigation */}
       <div className="space-y-1 flex-1">
         {navItems.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={cn(
+                "relative flex h-11 w-full items-center rounded-md transition-all duration-200",
+                isActive
+                  ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              <div className="grid h-full w-12 place-content-center">
+                <item.icon className="h-4 w-4" />
+              </div>
+              {open && (
+                <span className="text-sm font-medium">{item.title}</span>
+              )}
+            </NavLink>
+          );
+        })}
+
+        {/* Admin-only nav items */}
+        {adminNavItems.length > 0 && (
+          <>
+            {open && (
+              <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Admin
+              </div>
+            )}
+            {adminNavItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={cn(
+                    "relative flex h-11 w-full items-center rounded-md transition-all duration-200",
+                    isActive
+                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <div className="grid h-full w-12 place-content-center">
+                    <item.icon className="h-4 w-4" />
+                  </div>
+                  {open && (
+                    <span className="text-sm font-medium">{item.title}</span>
+                  )}
+                </NavLink>
+              );
+            })}
+          </>
+        )}
+
+        {/* Demo pages */}
+        {open && (
+          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Demo
+          </div>
+        )}
+        {demoNavItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
             <NavLink
