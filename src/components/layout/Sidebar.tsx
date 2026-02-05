@@ -80,15 +80,15 @@ const Sidebar = ({ className }: SidebarProps) => {
       {/* Logo Section */}
       <div className="mb-6 border-b border-sidebar-border pb-4">
         <div className="flex items-center gap-3 p-2">
-          <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-primary shadow-sm">
-            <span className="text-primary-foreground font-bold text-lg">C</span>
+          <div className="grid size-10 shrink-0 place-content-center rounded-lg bg-white/10 shadow-sm">
+            <span className="text-sidebar-foreground font-bold text-lg">C</span>
           </div>
           {open && (
             <div className="transition-opacity duration-200">
-              <span className="block text-sm font-semibold text-foreground">
+              <span className="block text-sm font-semibold text-sidebar-foreground">
                 ConsentMap
               </span>
-              <span className="block text-xs text-muted-foreground">
+              <span className="block text-xs text-sidebar-foreground/70">
                 Privacy Management
               </span>
             </div>
@@ -98,20 +98,20 @@ const Sidebar = ({ className }: SidebarProps) => {
         {/* User Info */}
         {user && (
           <div className={cn(
-            "flex items-center gap-3 p-2 mt-2 rounded-md bg-muted/50",
+            "flex items-center gap-3 p-2 mt-2 rounded-md bg-white/5",
             !open && "justify-center"
           )}>
             <div className={cn(
               "size-8 rounded-full flex items-center justify-center font-medium text-sm",
-              user.role === "admin" ? "bg-amber-500/20 text-amber-600" : "bg-primary/10 text-primary"
+              user.role === "admin" ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-sidebar-foreground"
             )}>
               {userInitials}
             </div>
             {open && (
               <div className="flex-1 min-w-0">
-                <span className="block text-sm font-medium text-foreground truncate">{user.name}</span>
+                <span className="block text-sm font-medium text-sidebar-foreground truncate">{user.name}</span>
                 <div className="flex items-center gap-2">
-                  <span className="block text-xs text-muted-foreground truncate">{user.email}</span>
+                  <span className="block text-xs text-sidebar-foreground/70 truncate">{user.email}</span>
                 </div>
                 <div className="mt-1">
                   <RoleBadge role={user.role} />
@@ -133,8 +133,8 @@ const Sidebar = ({ className }: SidebarProps) => {
               className={cn(
                 "relative flex h-11 w-full items-center rounded-md transition-all duration-200",
                 isActive
-                  ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-white/10 text-sidebar-foreground shadow-sm border-l-2 border-white/30"
+                  : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground"
               )}
             >
               <div className="grid h-full w-12 place-content-center">
@@ -151,7 +151,7 @@ const Sidebar = ({ className }: SidebarProps) => {
         {adminNavItems.length > 0 && (
           <>
             {open && (
-              <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <div className="px-3 py-2 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wide">
                 Admin
               </div>
             )}
@@ -164,8 +164,8 @@ const Sidebar = ({ className }: SidebarProps) => {
                   className={cn(
                     "relative flex h-11 w-full items-center rounded-md transition-all duration-200",
                     isActive
-                      ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-white/10 text-sidebar-foreground shadow-sm border-l-2 border-white/30"
+                      : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground"
                   )}
                 >
                   <div className="grid h-full w-12 place-content-center">
@@ -182,7 +182,7 @@ const Sidebar = ({ className }: SidebarProps) => {
 
         {/* Demo pages */}
         {open && (
-          <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          <div className="px-3 py-2 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wide">
             Demo
           </div>
         )}
@@ -195,8 +195,8 @@ const Sidebar = ({ className }: SidebarProps) => {
               className={cn(
                 "relative flex h-11 w-full items-center rounded-md transition-all duration-200",
                 isActive
-                  ? "bg-primary/10 text-primary shadow-sm border-l-2 border-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-white/10 text-sidebar-foreground shadow-sm border-l-2 border-white/30"
+                  : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground"
               )}
             >
               <div className="grid h-full w-12 place-content-center">
@@ -215,14 +215,14 @@ const Sidebar = ({ className }: SidebarProps) => {
         {/* Quick Stats */}
         {open && (
           <div className="mb-4">
-            <div className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <div className="px-3 py-2 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wide">
               Quick Stats
             </div>
             <div className="space-y-2 px-3">
               {quickStats.map((stat) => (
                 <div key={stat.label} className="flex justify-between items-center py-1">
-                  <span className="text-xs text-muted-foreground">{stat.label}</span>
-                  <span className="text-sm font-semibold text-foreground">{stat.value}</span>
+                  <span className="text-xs text-sidebar-foreground/70">{stat.label}</span>
+                  <span className="text-sm font-semibold text-sidebar-foreground">{stat.value}</span>
                 </div>
               ))}
             </div>
@@ -233,7 +233,7 @@ const Sidebar = ({ className }: SidebarProps) => {
         <NavLink
           to="/settings"
           className={cn(
-            "flex items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors",
+            "flex items-center rounded-md text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground transition-colors",
             open ? "gap-3 p-2" : "justify-center p-2"
           )}
         >
@@ -246,7 +246,7 @@ const Sidebar = ({ className }: SidebarProps) => {
           variant="ghost"
           onClick={handleLogout}
           className={cn(
-            "w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10",
+            "w-full text-sidebar-foreground/70 hover:text-red-400 hover:bg-red-500/10",
             open ? "justify-start gap-3 px-2" : "justify-center px-2"
           )}
         >
@@ -257,19 +257,19 @@ const Sidebar = ({ className }: SidebarProps) => {
         {/* Toggle Button */}
         <button
           onClick={() => setOpen(!open)}
-          className="w-full border-t border-sidebar-border mt-2 transition-colors hover:bg-muted"
+          className="w-full border-t border-white/10 mt-2 transition-colors hover:bg-white/10"
         >
           <div className="flex items-center p-3">
             <div className="grid size-10 place-content-center">
               <ChevronsRight
                 className={cn(
-                  "h-4 w-4 transition-transform duration-300 text-muted-foreground",
+                  "h-4 w-4 transition-transform duration-300 text-sidebar-foreground/70",
                   open && "rotate-180"
                 )}
               />
             </div>
             {open && (
-              <span className="text-sm font-medium text-muted-foreground">
+              <span className="text-sm font-medium text-sidebar-foreground/70">
                 Hide
               </span>
             )}
