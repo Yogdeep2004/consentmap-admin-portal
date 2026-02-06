@@ -10,17 +10,28 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddImagesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (images: { name: string; size: number }[]) => void;
+  onSubmit: (images: { name: string; size: number; factor?: string; batchNumber?: string }[]) => void;
 }
+
+const FACTOR_OPTIONS = ["Normal", "Dark", "Bright"];
 
 export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalProps) {
   const [imageName, setImageName] = useState("");
-  const [imageSize, setImageSize] = useState("");
+  const [factor, setFactor] = useState("");
+  const [customFactor, setCustomFactor] = useState("");
+  const [batchNumber, setBatchNumber] = useState("");
   const { toast } = useToast();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -35,19 +46,24 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
       return;
     }
 
+    const finalFactor = factor === "custom" ? customFactor.trim() : factor;
+
     onSubmit([{
       name: imageName.trim(),
-      size: parseInt(imageSize) || 0,
+      size: 0,
+      factor: finalFactor || undefined,
+      batchNumber: batchNumber.trim() || undefined,
     }]);
 
-    // Reset form
     setImageName("");
-    setImageSize("");
+    setFactor("");
+    setCustomFactor("");
+    setBatchNumber("");
     onOpenChange(false);
 
     toast({
       title: "Success",
-      description: "Image uploaded successfully",
+      description: "Image added successfully",
     });
   };
 
@@ -55,13 +71,34 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Images</DialogTitle>
+          <DialogTitle>Add Image</DialogTitle>
           <DialogDescription>
-            Add new images to this project.
+            Add a new image to this project.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="factor">Factor</Label>
+              <Select value={factor} onValueChange={setFactor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select factor..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {FACTOR_OPTIONS.map((opt) => (
+                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                  ))}
+                  <SelectItem value="custom">Custom...</SelectItem>
+                </SelectContent>
+              </Select>
+              {factor === "custom" && (
+                <Input
+                  placeholder="Enter custom factor"
+                  value={customFactor}
+                  onChange={(e) => setCustomFactor(e.target.value)}
+                />
+              )}
+            </div>
             <div className="grid gap-2">
               <Label htmlFor="imageName">Image Name *</Label>
               <Input
@@ -72,13 +109,12 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="imageSize">File Size (bytes)</Label>
+              <Label htmlFor="batchNumber">Batch Number</Label>
               <Input
-                id="imageSize"
-                type="number"
-                value={imageSize}
-                onChange={(e) => setImageSize(e.target.value)}
-                placeholder="e.g., 245000"
+                id="batchNumber"
+                value={batchNumber}
+                onChange={(e) => setBatchNumber(e.target.value)}
+                placeholder="e.g., BATCH-001"
               />
             </div>
           </div>
