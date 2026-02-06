@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Person } from "@/lib/types";
+import { Person, ImageFile } from "@/lib/types";
 import { usePermissions } from "@/hooks/use-permissions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -24,22 +24,24 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Check, X, AlertTriangle, Search, Filter, Columns, Edit2, FileText } from "lucide-react";
+import { Check, X, Search, Columns, Edit2, ImagePlus, Link } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConsentExcelTableProps {
   persons: Person[];
+  images?: ImageFile[];
   onEditPerson?: (personId: string, data: Partial<Person>) => void;
+  onAddImage?: () => void;
   className?: string;
 }
 
 type FilterType = "all" | "matching" | "not-matching";
-type SortField = "name" | "pid" | "timestamp" | "status";
+type SortField = "name" | "timestamp" | "status";
 type SortOrder = "asc" | "desc";
 
-const allColumns = ["PID", "Name", "Status", "Consent Document", "Uploaded By", "Timestamp"] as const;
+const allColumns = ["Image Name", "Status", "Image Preview", "Timestamp"] as const;
 
-export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentExcelTableProps) {
+export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddImage, className }: ConsentExcelTableProps) {
   const { canEditConsent } = usePermissions();
   
   const [searchQuery, setSearchQuery] = useState("");
@@ -47,43 +49,30 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
   const [visibleColumns, setVisibleColumns] = useState<string[]>([...allColumns]);
   const [sortField, setSortField] = useState<SortField>("name");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // Computed stats
   const total = persons.length;
   const matching = persons.filter((p) => p.consentMatched).length;
   const notMatching = total - matching;
 
-  // Filter and sort persons
   const filteredPersons = useMemo(() => {
     let result = [...persons];
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          (p.pid && p.pid.toLowerCase().includes(query))
-      );
+      result = result.filter((p) => p.name.toLowerCase().includes(query));
     }
 
-    // Apply status filter
     if (filter === "matching") {
       result = result.filter((p) => p.consentMatched);
     } else if (filter === "not-matching") {
       result = result.filter((p) => !p.consentMatched);
     }
 
-    // Apply sorting
     result.sort((a, b) => {
       let comparison = 0;
       switch (sortField) {
         case "name":
           comparison = a.name.localeCompare(b.name);
-          break;
-        case "pid":
-          comparison = (a.pid || "").localeCompare(b.pid || "");
           break;
         case "timestamp":
           comparison = a.timestamp - b.timestamp;
@@ -116,7 +105,6 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
   const handleToggleConsent = (personId: string, currentStatus: boolean) => {
     if (!canEditConsent || !onEditPerson) return;
     onEditPerson(personId, { consentMatched: !currentStatus });
-    setEditingId(null);
   };
 
   const getStatusIcon = (matched: boolean) => {
@@ -124,6 +112,11 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
       return <Check className="h-4 w-4 text-success" />;
     }
     return <X className="h-4 w-4 text-destructive" />;
+  };
+
+  // Find matching image for a person by name
+  const findImageForPerson = (personName: string): ImageFile | undefined => {
+    return images.find((img) => img.name.toLowerCase().includes(personName.toLowerCase()));
   };
 
   return (
@@ -151,14 +144,13 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by PID or name..."
+            placeholder="Search by name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
           />
         </div>
 
-        {/* Quick Filters */}
         <div className="flex items-center gap-1">
           <Button
             variant={filter === "all" ? "default" : "outline"}
@@ -187,7 +179,6 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
           </Button>
         </div>
 
-        {/* Column Visibility */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm">
@@ -214,20 +205,12 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes("PID") && (
-                <TableHead
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => handleSort("pid")}
-                >
-                  PID {sortField === "pid" && (sortOrder === "asc" ? "↑" : "↓")}
-                </TableHead>
-              )}
-              {visibleColumns.includes("Name") && (
+              {visibleColumns.includes("Image Name") && (
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("name")}
                 >
-                  Name {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+                  Image Name {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
               )}
               {visibleColumns.includes("Status") && (
@@ -238,11 +221,8 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
                   Status {sortField === "status" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
               )}
-              {visibleColumns.includes("Consent Document") && (
-                <TableHead>Consent Document</TableHead>
-              )}
-              {visibleColumns.includes("Uploaded By") && (
-                <TableHead>Uploaded By</TableHead>
+              {visibleColumns.includes("Image Preview") && (
+                <TableHead>Image Preview</TableHead>
               )}
               {visibleColumns.includes("Timestamp") && (
                 <TableHead
@@ -252,7 +232,7 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
                   Timestamp {sortField === "timestamp" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
               )}
-              {canEditConsent && <TableHead className="w-[60px]">Actions</TableHead>}
+              {canEditConsent && <TableHead className="w-[100px]">Actions</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -262,106 +242,106 @@ export function ConsentExcelTable({ persons, onEditPerson, className }: ConsentE
                   <div className="text-muted-foreground">
                     {searchQuery || filter !== "all"
                       ? "No matching records found"
-                      : "No persons added yet"}
+                      : "No entries added yet"}
                   </div>
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPersons.map((person) => (
-                <TableRow key={person.id}>
-                  {visibleColumns.includes("PID") && (
-                    <TableCell className="font-mono text-sm">
-                      {person.pid || <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                  )}
-                  {visibleColumns.includes("Name") && (
-                    <TableCell className="font-medium">{person.name}</TableCell>
-                  )}
-                  {visibleColumns.includes("Status") && (
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(person.consentMatched)}
-                            <Badge
-                              variant="outline"
-                              className={
-                                person.consentMatched
-                                  ? "bg-success/10 text-success border-success/30"
-                                  : "bg-destructive/10 text-destructive border-destructive/30"
-                              }
-                            >
-                              {person.consentMatched ? "Matched" : "Not Matched"}
-                            </Badge>
+              filteredPersons.map((person) => {
+                const matchedImage = findImageForPerson(person.name);
+                return (
+                  <TableRow key={person.id}>
+                    {visibleColumns.includes("Image Name") && (
+                      <TableCell className="font-medium">{person.name}</TableCell>
+                    )}
+                    {visibleColumns.includes("Status") && (
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2">
+                              {getStatusIcon(person.consentMatched)}
+                              <Badge
+                                variant="outline"
+                                className={
+                                  person.consentMatched
+                                    ? "bg-success/10 text-success border-success/30"
+                                    : "bg-destructive/10 text-destructive border-destructive/30"
+                                }
+                              >
+                                {person.consentMatched ? "Matched" : "Not Matched"}
+                              </Badge>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {person.consentMatched
+                              ? "Consent verified and matched"
+                              : "Consent pending verification"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("Image Preview") && (
+                      <TableCell>
+                        {matchedImage?.url ? (
+                          <img
+                            src={matchedImage.url}
+                            alt={matchedImage.name}
+                            className="h-10 w-10 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded bg-muted flex items-center justify-center">
+                            <ImagePlus className="h-4 w-4 text-muted-foreground" />
                           </div>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {person.consentMatched
-                            ? "Consent verified and matched"
-                            : "Consent pending verification"}
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                  )}
-                  {visibleColumns.includes("Consent Document") && (
-                    <TableCell>
-                      {person.consentFiles.length > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm truncate max-w-[150px]">
-                            {person.consentFiles[0]}
-                          </span>
-                          {person.consentFiles.length > 1 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{person.consentFiles.length - 1}
-                            </Badge>
+                        )}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("Timestamp") && (
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {format(new Date(person.timestamp), "MMM d, yyyy")}
+                      </TableCell>
+                    )}
+                    {canEditConsent && (
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {onAddImage && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={onAddImage}
+                                >
+                                  <ImagePlus className="h-3 w-3" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Add Image</TooltipContent>
+                            </Tooltip>
                           )}
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => handleToggleConsent(person.id, person.consentMatched)}
+                              >
+                                <Link className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Match Manually</TooltipContent>
+                          </Tooltip>
                         </div>
-                      ) : (
-                        <span className="text-muted-foreground text-sm flex items-center gap-1">
-                          <AlertTriangle className="h-3 w-3" />
-                          No document
-                        </span>
-                      )}
-                    </TableCell>
-                  )}
-                  {visibleColumns.includes("Uploaded By") && (
-                    <TableCell className="text-sm text-muted-foreground">
-                      {person.addedBy}
-                    </TableCell>
-                  )}
-                  {visibleColumns.includes("Timestamp") && (
-                    <TableCell className="text-right text-sm text-muted-foreground">
-                      {format(new Date(person.timestamp), "MMM d, yyyy")}
-                    </TableCell>
-                  )}
-                  {canEditConsent && (
-                    <TableCell>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => handleToggleConsent(person.id, person.consentMatched)}
-                          >
-                            <Edit2 className="h-3 w-3" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          Toggle consent status
-                        </TooltipContent>
-                      </Tooltip>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
+                      </TableCell>
+                    )}
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
       </div>
 
-      {/* Responsive note for mobile */}
       <p className="text-xs text-muted-foreground text-center md:hidden">
         Scroll horizontally to see all columns
       </p>

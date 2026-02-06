@@ -11,10 +11,9 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import CreateProject from "./pages/CreateProject";
 import ProjectDetail from "./pages/ProjectDetail";
-import PersonDashboard from "./pages/PersonDashboard";
+import DatabaseDetails from "./pages/DatabaseDetails";
 import RedactionModule from "./pages/RedactionModule";
 import LoginHistory from "./pages/LoginHistory";
-import DemoContributors from "./pages/DemoContributors";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -36,10 +35,9 @@ const App = () => (
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/create-project" element={<CreateProject />} />
                   <Route path="/project/:id" element={<ProjectDetail />} />
-                  <Route path="/person-dashboard" element={<PersonDashboard />} />
+                  <Route path="/database-details" element={<DatabaseDetails />} />
                   <Route path="/redaction" element={<RedactionModule />} />
                   <Route path="/login-history" element={<LoginHistory />} />
-                  <Route path="/demo-contributors" element={<DemoContributors />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />

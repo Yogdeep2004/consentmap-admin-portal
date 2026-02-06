@@ -34,6 +34,8 @@ export interface ImageFile {
   url?: string; // Object URL for preview (demo only - production should use backend storage)
   uploadedBy: string;
   timestamp: number;
+  factor?: string; // Lighting factor: Normal, Dark, Bright, or custom
+  batchNumber?: string;
 }
 
 export interface Person {
@@ -70,9 +72,10 @@ export interface Project {
   owner: string;
   createdBy: string; // Username of the person who created the project
   estimatedImageCount: number;
+  cameraTypes?: string[]; // DSLR, Mobile Phone
   status: "active" | "completed" | "on-hold";
-  images: ImageFile[]; // Single-person photos
-  groupImages: ImageFile[]; // Multi-person/group photos
+  images: ImageFile[]; // All project images
+  groupImages: ImageFile[]; // Legacy - kept for compatibility
   consentForms: ImageFile[]; // Consent form PDFs/Excel files
   persons: Person[];
   dataEntries: DataEntry[];

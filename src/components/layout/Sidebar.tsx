@@ -3,13 +3,12 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { 
   FolderKanban, 
   FilePlus, 
-  User, 
+  Database,
   Eraser,
   ChevronsRight,
   Settings,
   LogOut,
   History,
-  Users
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -33,9 +32,8 @@ const Sidebar = ({ className }: SidebarProps) => {
   const navItems = [
     { icon: FolderKanban, title: "Projects", path: "/dashboard" },
     { icon: FilePlus, title: "Create Project", path: "/create-project" },
-    { icon: User, title: "Person Dashboard", path: "/person-dashboard" },
+    { icon: Database, title: "Database Details", path: "/database-details" },
     { icon: Eraser, title: "Redaction Module", path: "/redaction" },
-    // Admin-only items will be added conditionally below
   ];
 
   // Add admin-only nav items
@@ -43,19 +41,12 @@ const Sidebar = ({ className }: SidebarProps) => {
     { icon: History, title: "Login History", path: "/login-history" },
   ] : [];
 
-  // Demo pages
-  const demoNavItems = [
-    { icon: Users, title: "Contributors Demo", path: "/demo-contributors" },
-  ];
-
   // Dynamic stats from projects
   const activeProjects = projects.filter((p) => p.status === "active").length;
-  const totalPersons = projects.reduce((acc, p) => acc + p.persons.length, 0);
   const totalImages = projects.reduce((acc, p) => acc + p.images.length + (p.groupImages?.length || 0), 0);
 
   const quickStats = [
     { label: "Active Projects", value: activeProjects.toString() },
-    { label: "Total Persons", value: totalPersons.toLocaleString() },
     { label: "Total Images", value: totalImages.toLocaleString() },
   ];
 
@@ -179,35 +170,6 @@ const Sidebar = ({ className }: SidebarProps) => {
             })}
           </>
         )}
-
-        {/* Demo pages */}
-        {open && (
-          <div className="px-3 py-2 text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wide">
-            Demo
-          </div>
-        )}
-        {demoNavItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              className={cn(
-                "relative flex h-11 w-full items-center rounded-md transition-all duration-200",
-                isActive
-                  ? "bg-white/10 text-sidebar-foreground shadow-sm border-l-2 border-white/30"
-                  : "text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground"
-              )}
-            >
-              <div className="grid h-full w-12 place-content-center">
-                <item.icon className="h-4 w-4" />
-              </div>
-              {open && (
-                <span className="text-sm font-medium">{item.title}</span>
-              )}
-            </NavLink>
-          );
-        })}
       </div>
 
       {/* Bottom Section */}
