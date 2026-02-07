@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Upload, Image, Check, X } from "lucide-react";
+import { Search, Upload, Image, Check, X, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -114,6 +114,29 @@ export function UniqueImagesTable({ images, consentForms, onUpdateImage, classNa
             Not Uploaded
           </Button>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const headers = ["Image Name", "Consent Form"];
+            const rows = filteredImages.map((img) => {
+              const consent = getConsentForImage(img.name);
+              return [img.name, consent ? "Uploaded" : "Not Uploaded"].join(",");
+            });
+            const csv = [headers.join(","), ...rows].join("\n");
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "unique-images.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Generate Excel
+        </Button>
       </div>
 
       <div className="rounded-md border overflow-x-auto">

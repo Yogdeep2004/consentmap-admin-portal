@@ -24,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Check, X, Search, Columns, ImagePlus, Link } from "lucide-react";
+import { Check, X, Search, Columns, ImagePlus, Link, FileSpreadsheet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConsentExcelTableProps {
@@ -178,6 +178,35 @@ export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddIma
             Not Matching
           </Button>
         </div>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const headers = visibleColumns.join(",");
+            const rows = filteredPersons.map((p, i) => {
+              const img = findImageForPerson(p.name);
+              return [
+                i + 1,
+                p.consentMatched ? "Matched" : "Not Matched",
+                img?.url ? img.name : "",
+                img?.batchNumber || "",
+                new Date(p.timestamp).toLocaleDateString(),
+              ].join(",");
+            });
+            const csv = [headers, ...rows].join("\n");
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "consent-tracking.csv";
+            a.click();
+            URL.revokeObjectURL(url);
+          }}
+        >
+          <FileSpreadsheet className="h-4 w-4 mr-2" />
+          Generate Excel
+        </Button>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
