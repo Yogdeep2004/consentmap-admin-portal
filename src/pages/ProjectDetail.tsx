@@ -55,7 +55,9 @@ const ProjectDetail = () => {
   const { canEdit, canDelete, canEditConsent } = usePermissions();
   const { toast } = useToast();
 
-  const project = getProject(id || "");
+  const rawProject = getProject(id || "");
+  // Ensure consentForms exists for projects created before this field was added
+  const project = rawProject ? { ...rawProject, consentForms: rawProject.consentForms || [] } : undefined;
 
   // Modal states
   const [addConsentOpen, setAddConsentOpen] = useState(false);
@@ -94,7 +96,7 @@ const ProjectDetail = () => {
     });
   };
 
-  const handleAddImages = (images: { name: string; size: number; factor?: string; batchNumber?: string }[]) => {
+  const handleAddImages = (images: { name: string; size: number; factor?: string; batchNumber?: string; url?: string }[]) => {
     images.forEach((img) => {
       addImage(project.id, {
         name: img.name,
@@ -102,6 +104,7 @@ const ProjectDetail = () => {
         uploadedBy: user?.email || "unknown",
         factor: img.factor,
         batchNumber: img.batchNumber,
+        url: img.url,
       });
       addEvent(project.id, {
         type: "image_uploaded",
