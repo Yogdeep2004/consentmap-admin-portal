@@ -55,12 +55,6 @@ export function ProjectStatusPanel({ persons, images = [], className }: ProjectS
           </div>
           <Progress value={matchPercentage} className="h-2" />
         </div>
-
-        {persons.length > 0 && notMatching > 0 && (
-          <p className="text-xs text-warning flex items-center gap-1">
-            ⚠️ {notMatching} entr{notMatching > 1 ? "ies" : "y"} pending consent verification
-          </p>
-        )}
       </CardContent>
     </Card>
   );

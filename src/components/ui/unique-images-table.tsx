@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { ImageFile } from "@/lib/types";
 import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
@@ -12,24 +12,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Edit2, Upload, Image } from "lucide-react";
+import { Search, Upload, Image, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface UniqueImagesTableProps {
   images: ImageFile[];
@@ -38,13 +23,14 @@ interface UniqueImagesTableProps {
   className?: string;
 }
 
-type ImageStatus = "uploaded" | "pending" | "reviewed";
+type FilterType = "all" | "uploaded" | "not-uploaded";
 
 export function UniqueImagesTable({ images, consentForms, onUpdateImage, className }: UniqueImagesTableProps) {
   const { canEdit } = usePermissions();
-  const [editingImage, setEditingImage] = useState<ImageFile | null>(null);
-  const [editConsentFile, setEditConsentFile] = useState("");
-  const [editStatus, setEditStatus] = useState<string>("");
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Deduplicate images by name
   const uniqueImages = images.reduce<ImageFile[]>((acc, img) => {
@@ -58,42 +44,98 @@ export function UniqueImagesTable({ images, consentForms, onUpdateImage, classNa
     return consentForms.find((cf) => cf.name.toLowerCase().includes(imageName.split(".")[0].toLowerCase()));
   };
 
-  const handleEdit = (image: ImageFile) => {
-    setEditingImage(image);
-    const consent = getConsentForImage(image.name);
-    setEditConsentFile(consent?.name || "");
-    setEditStatus("uploaded");
+  const filteredImages = useMemo(() => {
+    let result = [...uniqueImages];
+
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter((img) => img.name.toLowerCase().includes(query));
+    }
+
+    if (filter === "uploaded") {
+      result = result.filter((img) => !!getConsentForImage(img.name));
+    } else if (filter === "not-uploaded") {
+      result = result.filter((img) => !getConsentForImage(img.name));
+    }
+
+    return result;
+  }, [uniqueImages, searchQuery, filter, consentForms]);
+
+  const handleConsentUpload = (imageId: string, file: File) => {
+    // In a real app this would upload the file
+    toast({
+      title: "Consent uploaded",
+      description: `Consent form "${file.name}" linked successfully`,
+    });
   };
 
-  const handleSaveEdit = () => {
-    if (!editingImage) return;
-    // In a real app, this would update the image metadata
-    setEditingImage(null);
-    setEditConsentFile("");
-    setEditStatus("");
+  const triggerFileInput = (imageId: string) => {
+    fileInputRefs.current[imageId]?.click();
   };
 
   return (
     <div className={cn("space-y-4", className)}>
+      {/* Filters Row - same template as consent table */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search images..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Button
+            variant={filter === "all" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("all")}
+          >
+            All
+          </Button>
+          <Button
+            variant={filter === "uploaded" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("uploaded")}
+            className={filter === "uploaded" ? "" : "text-success border-success/30 hover:bg-success/10"}
+          >
+            <Check className="h-3 w-3 mr-1" />
+            Uploaded
+          </Button>
+          <Button
+            variant={filter === "not-uploaded" ? "default" : "outline"}
+            size="sm"
+            onClick={() => setFilter("not-uploaded")}
+            className={filter === "not-uploaded" ? "" : "text-destructive border-destructive/30 hover:bg-destructive/10"}
+          >
+            <X className="h-3 w-3 mr-1" />
+            Not Uploaded
+          </Button>
+        </div>
+      </div>
+
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
               <TableHead>Image Name</TableHead>
               <TableHead>Consent Form</TableHead>
-              <TableHead>Status</TableHead>
               {canEdit && <TableHead className="w-[60px]">Edit</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {uniqueImages.length === 0 ? (
+            {filteredImages.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={canEdit ? 4 : 3} className="text-center py-8">
-                  <div className="text-muted-foreground">No images uploaded yet</div>
+                <TableCell colSpan={canEdit ? 3 : 2} className="text-center py-8">
+                  <div className="text-muted-foreground">
+                    {searchQuery || filter !== "all" ? "No matching images found" : "No images uploaded yet"}
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
-              uniqueImages.map((image) => {
+              filteredImages.map((image) => {
                 const consent = getConsentForImage(image.name);
                 return (
                   <TableRow key={image.id}>
@@ -121,20 +163,27 @@ export function UniqueImagesTable({ images, consentForms, onUpdateImage, classNa
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">
-                        {consent ? "Reviewed" : "Pending"}
-                      </Badge>
-                    </TableCell>
                     {canEdit && (
                       <TableCell>
+                        <input
+                          type="file"
+                          className="hidden"
+                          ref={(el) => { fileInputRefs.current[image.id] = el; }}
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleConsentUpload(image.id, file);
+                            e.target.value = "";
+                          }}
+                        />
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => handleEdit(image)}
+                          onClick={() => triggerFileInput(image.id)}
+                          title="Upload consent form"
                         >
-                          <Edit2 className="h-3 w-3" />
+                          <Upload className="h-3 w-3" />
                         </Button>
                       </TableCell>
                     )}
@@ -145,45 +194,6 @@ export function UniqueImagesTable({ images, consentForms, onUpdateImage, classNa
           </TableBody>
         </Table>
       </div>
-
-      {/* Edit Dialog */}
-      <Dialog open={!!editingImage} onOpenChange={(open) => !open && setEditingImage(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Image Details</DialogTitle>
-            <DialogDescription>
-              Update consent and status for {editingImage?.name}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label>Consent File Name</Label>
-              <Input
-                value={editConsentFile}
-                onChange={(e) => setEditConsentFile(e.target.value)}
-                placeholder="e.g., consent-form.pdf"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Status</Label>
-              <Select value={editStatus} onValueChange={setEditStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="uploaded">Uploaded</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="reviewed">Reviewed</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingImage(null)}>Cancel</Button>
-            <Button onClick={handleSaveEdit}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

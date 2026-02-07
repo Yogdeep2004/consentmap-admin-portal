@@ -253,13 +253,9 @@ const ProjectDetail = () => {
             <Images className="h-4 w-4" />
             Unique Images
           </TabsTrigger>
-          <TabsTrigger value="images" className="gap-2">
+        <TabsTrigger value="images" className="gap-2">
             <Image className="h-4 w-4" />
             Images
-          </TabsTrigger>
-          <TabsTrigger value="overview" className="gap-2">
-            <FileText className="h-4 w-4" />
-            Overview
           </TabsTrigger>
         </TabsList>
 
@@ -357,48 +353,6 @@ const ProjectDetail = () => {
           </Card>
         </TabsContent>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Data Entries Panel */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-base font-medium flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Data ({project.dataEntries.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-2">
-                    {project.dataEntries.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">No data entries yet</p>
-                    ) : (
-                      project.dataEntries.map((entry) => (
-                        <div key={entry.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
-                          <div>
-                            <p className="text-xs text-muted-foreground">{entry.key}</p>
-                            <p className="text-sm font-medium">{entry.value}</p>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Timeline Panel */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base font-medium">Activity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ProjectTimeline events={project.events} onClearHistory={handleClearHistory} />
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
       </Tabs>
 
       {/* Modals */}
