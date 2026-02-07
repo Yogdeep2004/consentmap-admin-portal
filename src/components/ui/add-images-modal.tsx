@@ -17,12 +17,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FileUpload } from "@/components/ui/file-upload";
 import { useToast } from "@/hooks/use-toast";
 
 interface AddImagesModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (images: { name: string; size: number; factor?: string; batchNumber?: string }[]) => void;
+  onSubmit: (images: { name: string; size: number; factor?: string; batchNumber?: string; url?: string }[]) => void;
 }
 
 const FACTOR_OPTIONS = ["Normal", "Dark", "Bright"];
@@ -32,15 +33,26 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
   const [factor, setFactor] = useState("");
   const [customFactor, setCustomFactor] = useState("");
   const [batchNumber, setBatchNumber] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const { toast } = useToast();
+
+  const handleFileUpload = (files: File[]) => {
+    setUploadedFiles((prev) => [...prev, ...files]);
+    // Auto-fill image name from first uploaded file if empty
+    if (!imageName && files.length > 0) {
+      setImageName(files[0].name);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!imageName.trim()) {
+    const finalName = imageName.trim() || (uploadedFiles.length > 0 ? uploadedFiles[0].name : "");
+
+    if (!finalName) {
       toast({
         title: "Error",
-        description: "Image name is required",
+        description: "Image name is required or upload a file",
         variant: "destructive",
       });
       return;
@@ -48,17 +60,21 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
 
     const finalFactor = factor === "custom" ? customFactor.trim() : factor;
 
+    const url = uploadedFiles.length > 0 ? URL.createObjectURL(uploadedFiles[0]) : undefined;
+
     onSubmit([{
-      name: imageName.trim(),
-      size: 0,
+      name: finalName,
+      size: uploadedFiles.length > 0 ? uploadedFiles[0].size : 0,
       factor: finalFactor || undefined,
       batchNumber: batchNumber.trim() || undefined,
+      url,
     }]);
 
     setImageName("");
     setFactor("");
     setCustomFactor("");
     setBatchNumber("");
+    setUploadedFiles([]);
     onOpenChange(false);
 
     toast({
@@ -69,7 +85,7 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
           <DialogTitle>Add Image</DialogTitle>
           <DialogDescription>
@@ -99,13 +115,20 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
                 />
               )}
             </div>
+
+            {/* File Upload Dropbox */}
             <div className="grid gap-2">
-              <Label htmlFor="imageName">Image Name *</Label>
+              <Label>Image Upload</Label>
+              <FileUpload onChange={handleFileUpload} />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="imageName">Image Name</Label>
               <Input
                 id="imageName"
                 value={imageName}
                 onChange={(e) => setImageName(e.target.value)}
-                placeholder="e.g., photo-001.jpg"
+                placeholder="Auto-filled from upload or enter manually"
               />
             </div>
             <div className="grid gap-2">

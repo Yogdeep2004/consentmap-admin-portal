@@ -1,5 +1,5 @@
 import { Progress } from "@/components/ui/progress";
-import { Image, FileText, Hash } from "lucide-react";
+import { Image, FileText } from "lucide-react";
 import { Project } from "@/lib/types";
 
 interface ProjectProgressProps {
@@ -18,10 +18,6 @@ export function ProjectProgress({ project, compact = false }: ProjectProgressPro
   if (compact) {
     return (
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Hash className="h-3 w-3" />
-          {project.estimatedImageCount}
-        </span>
         <span className="flex items-center gap-1">
           <Image className="h-3 w-3" />
           {imagesCount}
@@ -42,10 +38,6 @@ export function ProjectProgress({ project, compact = false }: ProjectProgressPro
       </div>
       <Progress value={progress} className="h-2" />
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <Hash className="h-3.5 w-3.5" />
-          {project.estimatedImageCount} target count
-        </span>
         <span className="flex items-center gap-1">
           <Image className="h-3.5 w-3.5" />
           {imagesCount} images

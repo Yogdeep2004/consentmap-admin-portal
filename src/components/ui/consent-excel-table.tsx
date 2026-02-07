@@ -24,7 +24,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Check, X, Search, Columns, Edit2, ImagePlus, Link } from "lucide-react";
+import { Check, X, Search, Columns, ImagePlus, Link } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ConsentExcelTableProps {
@@ -39,7 +39,7 @@ type FilterType = "all" | "matching" | "not-matching";
 type SortField = "name" | "timestamp" | "status";
 type SortOrder = "asc" | "desc";
 
-const allColumns = ["Image Name", "Status", "Image Preview", "Timestamp"] as const;
+const allColumns = ["Image Number", "Status", "Image Preview", "Batch Number", "Timestamp"] as const;
 
 export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddImage, className }: ConsentExcelTableProps) {
   const { canEditConsent } = usePermissions();
@@ -144,7 +144,7 @@ export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddIma
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -205,12 +205,12 @@ export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddIma
         <Table>
           <TableHeader>
             <TableRow>
-              {visibleColumns.includes("Image Name") && (
+              {visibleColumns.includes("Image Number") && (
                 <TableHead
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => handleSort("name")}
                 >
-                  Image Name {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
+                  Image Number {sortField === "name" && (sortOrder === "asc" ? "↑" : "↓")}
                 </TableHead>
               )}
               {visibleColumns.includes("Status") && (
@@ -223,6 +223,9 @@ export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddIma
               )}
               {visibleColumns.includes("Image Preview") && (
                 <TableHead>Image Preview</TableHead>
+              )}
+              {visibleColumns.includes("Batch Number") && (
+                <TableHead>Batch Number</TableHead>
               )}
               {visibleColumns.includes("Timestamp") && (
                 <TableHead
@@ -247,37 +250,28 @@ export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddIma
                 </TableCell>
               </TableRow>
             ) : (
-              filteredPersons.map((person) => {
+              filteredPersons.map((person, index) => {
                 const matchedImage = findImageForPerson(person.name);
                 return (
                   <TableRow key={person.id}>
-                    {visibleColumns.includes("Image Name") && (
-                      <TableCell className="font-medium">{person.name}</TableCell>
+                    {visibleColumns.includes("Image Number") && (
+                      <TableCell className="font-medium">{index + 1}</TableCell>
                     )}
                     {visibleColumns.includes("Status") && (
                       <TableCell>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="flex items-center gap-2">
-                              {getStatusIcon(person.consentMatched)}
-                              <Badge
-                                variant="outline"
-                                className={
-                                  person.consentMatched
-                                    ? "bg-success/10 text-success border-success/30"
-                                    : "bg-destructive/10 text-destructive border-destructive/30"
-                                }
-                              >
-                                {person.consentMatched ? "Matched" : "Not Matched"}
-                              </Badge>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            {person.consentMatched
-                              ? "Consent verified and matched"
-                              : "Consent pending verification"}
-                          </TooltipContent>
-                        </Tooltip>
+                        <div className="flex items-center gap-2">
+                          {getStatusIcon(person.consentMatched)}
+                          <Badge
+                            variant="outline"
+                            className={
+                              person.consentMatched
+                                ? "bg-success/10 text-success border-success/30"
+                                : "bg-destructive/10 text-destructive border-destructive/30"
+                            }
+                          >
+                            {person.consentMatched ? "Matched" : "Not Matched"}
+                          </Badge>
+                        </div>
                       </TableCell>
                     )}
                     {visibleColumns.includes("Image Preview") && (
@@ -293,6 +287,11 @@ export function ConsentExcelTable({ persons, images = [], onEditPerson, onAddIma
                             <ImagePlus className="h-4 w-4 text-muted-foreground" />
                           </div>
                         )}
+                      </TableCell>
+                    )}
+                    {visibleColumns.includes("Batch Number") && (
+                      <TableCell className="text-sm text-muted-foreground">
+                        {matchedImage?.batchNumber || "—"}
                       </TableCell>
                     )}
                     {visibleColumns.includes("Timestamp") && (

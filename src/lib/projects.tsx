@@ -32,104 +32,34 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 const createDemoProjects = (): Project[] => [
   {
     id: "proj-1",
-    name: "Marketing Campaign 2024",
-    description: "Consent collection for Q1 marketing materials",
+    name: "test project - 1",
+    description: "Test project for consent mapping",
     owner: "admin@example.com",
     createdBy: "Admin User",
     estimatedImageCount: 50,
     status: "active",
-    images: [
-      { id: "img-1", name: "hero-banner.jpg", size: 245000, uploadedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
-      { id: "img-2", name: "product-shot.png", size: 180000, uploadedBy: "user@example.com", timestamp: Date.now() - 43200000 },
-    ],
-    groupImages: [
-      { id: "gimg-1", name: "team-celebration.jpg", size: 380000, uploadedBy: "admin@example.com", timestamp: Date.now() - 72000000 },
-    ],
-    consentForms: [
-      { id: "cf-1", name: "consent-template.pdf", size: 125000, uploadedBy: "admin@example.com", timestamp: Date.now() - 172800000 },
-    ],
-    persons: [
-      { id: "per-1", name: "John Doe", pid: "PID-001", consentFiles: ["consent-john.pdf"], consentMatched: true, notes: "Full consent granted", addedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
-      { id: "per-2", name: "Jane Smith", pid: "PID-002", consentFiles: ["consent-jane.pdf"], consentMatched: true, addedBy: "user@example.com", timestamp: Date.now() - 43200000 },
-      { id: "per-3", name: "Mike Johnson", pid: "PID-003", consentFiles: [], consentMatched: false, addedBy: "admin@example.com", timestamp: Date.now() - 36000000 },
-    ],
-    dataEntries: [
-      { id: "data-1", key: "Campaign Type", value: "Digital", addedBy: "admin@example.com", timestamp: Date.now() - 86400000 },
-    ],
-    events: [
-      { id: "evt-1", type: "created", user: "admin@example.com", timestamp: Date.now() - 172800000, description: "Project created" },
-      { id: "evt-2", type: "person_added", user: "admin@example.com", timestamp: Date.now() - 86400000, description: "Added John Doe" },
-      { id: "evt-3", type: "image_uploaded", user: "admin@example.com", timestamp: Date.now() - 86400000, description: "Uploaded hero-banner.jpg" },
-      { id: "evt-4", type: "person_added", user: "user@example.com", timestamp: Date.now() - 43200000, description: "Added Jane Smith" },
-    ],
-    createdAt: Date.now() - 172800000,
-    updatedAt: Date.now() - 43200000,
-  },
-  {
-    id: "proj-2",
-    name: "Product Launch Event",
-    description: "Photo consent for annual product launch",
-    owner: "user@example.com",
-    createdBy: "Demo User",
-    estimatedImageCount: 100,
-    status: "active",
     images: [],
     groupImages: [],
     consentForms: [],
-    persons: [
-      { id: "per-4", name: "Bob Wilson", consentFiles: [], consentMatched: false, addedBy: "user@example.com", timestamp: Date.now() - 3600000 },
-      { id: "per-5", name: "Sarah Connor", pid: "EMP-042", consentFiles: ["consent-sarah.pdf"], consentMatched: true, addedBy: "user@example.com", timestamp: Date.now() - 7200000 },
-    ],
+    persons: [],
     dataEntries: [],
     events: [
-      { id: "evt-5", type: "created", user: "user@example.com", timestamp: Date.now() - 86400000, description: "Project created" },
-      { id: "evt-6", type: "person_added", user: "user@example.com", timestamp: Date.now() - 3600000, description: "Added Bob Wilson" },
+      { id: "evt-1", type: "created", user: "admin@example.com", timestamp: Date.now() - 172800000, description: "Project created" },
     ],
-    createdAt: Date.now() - 86400000,
-    updatedAt: Date.now() - 3600000,
-  },
-  {
-    id: "proj-3",
-    name: "Annual Report 2023",
-    description: "Employee photo consents for annual report",
-    owner: "admin@example.com",
-    createdBy: "Admin User",
-    estimatedImageCount: 30,
-    status: "completed",
-    images: [
-      { id: "img-3", name: "team-photo.jpg", size: 520000, uploadedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
-    ],
-    groupImages: [
-      { id: "gimg-2", name: "all-hands-meeting.jpg", size: 890000, uploadedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
-    ],
-    consentForms: [
-      { id: "cf-2", name: "employee-consent-form.xlsx", size: 45000, uploadedBy: "admin@example.com", timestamp: Date.now() - 1209600000 },
-    ],
-    persons: [
-      { id: "per-6", name: "Alice Brown", pid: "EMP-101", consentFiles: ["consent-alice.pdf"], consentMatched: true, addedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
-    ],
-    dataEntries: [
-      { id: "data-2", key: "Department", value: "Engineering", addedBy: "admin@example.com", timestamp: Date.now() - 604800000 },
-    ],
-    events: [
-      { id: "evt-7", type: "created", user: "admin@example.com", timestamp: Date.now() - 1209600000, description: "Project created" },
-    ],
-    createdAt: Date.now() - 1209600000,
-    updatedAt: Date.now() - 604800000,
+    createdAt: Date.now() - 172800000,
+    updatedAt: Date.now() - 43200000,
   },
 ];
 
 export function ProjectsProvider({ children }: { children: ReactNode }) {
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // Load projects from localStorage on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem(PROJECTS_STORAGE_KEY);
       if (stored) {
         setProjects(JSON.parse(stored));
       } else {
-        // Initialize with demo projects
         const demoProjects = createDemoProjects();
         setProjects(demoProjects);
         localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(demoProjects));
@@ -141,7 +71,6 @@ export function ProjectsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Save projects to localStorage whenever they change
   useEffect(() => {
     if (projects.length > 0) {
       localStorage.setItem(PROJECTS_STORAGE_KEY, JSON.stringify(projects));
