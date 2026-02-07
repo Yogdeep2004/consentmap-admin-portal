@@ -45,7 +45,7 @@ export const FileUpload = ({
       <motion.div
         onClick={handleClick}
         whileHover="animate"
-        className="p-10 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
+        className="p-4 group/file block rounded-lg cursor-pointer w-full relative overflow-hidden"
       >
         <input
           ref={fileInputRef}
@@ -58,20 +58,20 @@ export const FileUpload = ({
           <GridPattern />
         </div>
         <div className="flex flex-col items-center justify-center">
-          <p className="relative z-20 font-semibold text-foreground text-base">
+          <p className="relative z-20 font-semibold text-foreground text-sm">
             Upload file
           </p>
-          <p className="relative z-20 font-normal text-muted-foreground text-sm mt-2">
+          <p className="relative z-20 font-normal text-muted-foreground text-xs mt-1">
             Drag or drop your files here or click to upload
           </p>
-          <div className="relative w-full mt-10 max-w-xl mx-auto">
+          <div className="relative w-full mt-4 max-w-xl mx-auto">
             {files.length > 0 &&
               files.map((file, idx) => (
                 <motion.div
                   key={"file" + idx}
                   layoutId={idx === 0 ? "file-upload" : "file-upload-" + idx}
                   className={cn(
-                    "relative overflow-hidden z-40 bg-card flex flex-col items-start justify-start md:h-24 p-4 mt-4 w-full mx-auto rounded-md",
+                    "relative overflow-hidden z-40 bg-card flex flex-col items-start justify-start p-3 mt-2 w-full mx-auto rounded-md",
                     "shadow-sm border border-border"
                   )}
                 >
@@ -124,7 +124,7 @@ export const FileUpload = ({
                   damping: 20,
                 }}
                 className={cn(
-                  "relative group-hover/file:shadow-2xl z-40 bg-card flex items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md",
+                  "relative group-hover/file:shadow-2xl z-40 bg-card flex items-center justify-center h-20 mt-2 w-full max-w-[6rem] mx-auto rounded-md",
                   "shadow-sm border border-border"
                 )}
               >
@@ -146,7 +146,7 @@ export const FileUpload = ({
             {!files.length && (
               <motion.div
                 variants={secondaryVariant}
-                className="absolute opacity-0 border border-dashed border-primary inset-0 z-30 bg-transparent flex items-center justify-center h-32 mt-4 w-full max-w-[8rem] mx-auto rounded-md"
+                className="absolute opacity-0 border border-dashed border-primary inset-0 z-30 bg-transparent flex items-center justify-center h-20 mt-2 w-full max-w-[6rem] mx-auto rounded-md"
               ></motion.div>
             )}
           </div>
@@ -158,7 +158,7 @@ export const FileUpload = ({
 
 export function GridPattern() {
   const columns = 41;
-  const rows = 11;
+  const rows = 6;
   return (
     <div className="flex bg-muted flex-shrink-0 flex-wrap justify-center items-center gap-x-px gap-y-px scale-105">
       {Array.from({ length: rows }).map((_, row) =>
