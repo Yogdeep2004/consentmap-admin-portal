@@ -14,6 +14,7 @@ import ProjectDetail from "./pages/ProjectDetail";
 import DatabaseDetails from "./pages/DatabaseDetails";
 import RedactionModule from "./pages/RedactionModule";
 import LoginHistory from "./pages/LoginHistory";
+import Settings from "./pages/Settings";
 import DashboardLayout from "./components/layout/DashboardLayout";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
                   <Route path="/database-details" element={<DatabaseDetails />} />
                   <Route path="/redaction" element={<RedactionModule />} />
                   <Route path="/login-history" element={<LoginHistory />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Route>
               </Route>
               <Route path="*" element={<NotFound />} />
