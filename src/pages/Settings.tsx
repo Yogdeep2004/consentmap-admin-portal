@@ -13,7 +13,7 @@ const CONSENT_BLOCK_KEY = "consentmap:block-expired-uploads";
 
 const Settings = () => {
   const { user } = useAuth();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, canViewConsent, canEditConsent } = usePermissions();
 
   // Simulated account creation date (use registered user data or fallback)
   const accountCreated = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000); // 90 days ago for demo
@@ -203,8 +203,8 @@ const Settings = () => {
         </div>
       </section>
 
-      {/* Section 2: Consent & Compliance (Admin only) */}
-      {isAdmin && (
+      {/* Section 3: Consent & Compliance (Admin + Collaborator view) */}
+      {canViewConsent && (
         <section>
           <div className="flex items-center gap-2 mb-4">
             <Shield className="h-4 w-4 text-muted-foreground" />
@@ -217,7 +217,11 @@ const Settings = () => {
             <Row label="Default Consent Status" value="Pending" />
             <div className="flex items-center justify-between py-1.5">
               <span className="text-sm text-muted-foreground">Block uploads after consent expiry</span>
-              <Switch checked={blockExpiredUploads} onCheckedChange={handleBlockToggle} />
+              {canEditConsent ? (
+                <Switch checked={blockExpiredUploads} onCheckedChange={handleBlockToggle} />
+              ) : (
+                <span className="text-sm font-medium text-foreground">{blockExpiredUploads ? "On" : "Off"}</span>
+              )}
             </div>
           </div>
         </section>

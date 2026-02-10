@@ -98,7 +98,7 @@ const Sidebar = ({ className }: SidebarProps) => {
           )}>
             <div className={cn(
               "size-8 rounded-full flex items-center justify-center font-medium text-sm",
-              user.role === "admin" ? "bg-amber-500/20 text-amber-400" : "bg-white/10 text-sidebar-foreground"
+              user.role === "admin" ? "bg-amber-500/20 text-amber-400" : user.role === "collaborator" ? "bg-emerald-500/20 text-emerald-400" : "bg-white/10 text-sidebar-foreground"
             )}>
               {userInitials}
             </div>

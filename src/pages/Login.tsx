@@ -127,6 +127,7 @@ const Login = () => {
     const account = DEMO_ACCOUNTS[demoEmail];
     if (account) {
       setEmail(demoEmail);
+      setPassword(account.password);
       setRole(account.role);
       setIsSignUp(false);
     }
@@ -163,7 +164,16 @@ const Login = () => {
               className="flex-1 text-xs"
               onClick={() => handleDemoLogin("admin@example.com")}
             >
-              Demo Admin
+              Admin
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="flex-1 text-xs"
+              onClick={() => handleDemoLogin("collab@example.com")}
+            >
+              Collaborator
             </Button>
             <Button
               type="button"
@@ -172,7 +182,7 @@ const Login = () => {
               className="flex-1 text-xs"
               onClick={() => handleDemoLogin("user@example.com")}
             >
-              Demo User
+              User
             </Button>
           </div>
         )}
@@ -245,6 +255,10 @@ const Login = () => {
                 <Label htmlFor="role-user" className="font-normal cursor-pointer">User</Label>
               </div>
               <div className="flex items-center space-x-2">
+                <RadioGroupItem value="collaborator" id="role-collaborator" />
+                <Label htmlFor="role-collaborator" className="font-normal cursor-pointer">Collaborator</Label>
+              </div>
+              <div className="flex items-center space-x-2">
                 <RadioGroupItem value="admin" id="role-admin" />
                 <Label htmlFor="role-admin" className="font-normal cursor-pointer">Admin</Label>
               </div>
@@ -252,6 +266,8 @@ const Login = () => {
             <p className="text-xs text-muted-foreground">
               {role === "admin" 
                 ? "Full access: Add, Edit, Upload, Delete" 
+                : role === "collaborator"
+                ? "View admin content, Add & Upload — no editing or deleting"
                 : "Limited access: Add, Upload only"
               }
             </p>

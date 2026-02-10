@@ -24,6 +24,7 @@ const generateId = () => Math.random().toString(36).substring(2, 9);
 const DEMO_ACCOUNTS: Record<string, { name: string; role: UserRole; password: string }> = {
   "admin@example.com": { name: "Admin User", role: "admin", password: "admin123" },
   "user@example.com": { name: "Demo User", role: "user", password: "user123" },
+  "collab@example.com": { name: "Collaborator User", role: "collaborator", password: "collab123" },
 };
 
 // Helper to get auth events from localStorage
