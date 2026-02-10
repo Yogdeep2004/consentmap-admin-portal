@@ -9,6 +9,8 @@ import {
   Settings,
   LogOut,
   History,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -16,6 +18,7 @@ import { useProjects } from "@/lib/projects";
 import { usePermissions } from "@/hooks/use-permissions";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Button } from "@/components/ui/button";
+import { useDarkMode } from "@/hooks/use-dark-mode";
 
 interface SidebarProps {
   className?: string;
@@ -28,6 +31,7 @@ const Sidebar = ({ className }: SidebarProps) => {
   const { user, logout } = useAuth();
   const { projects } = useProjects();
   const { canViewLoginHistory } = usePermissions();
+  const { isDark, toggleDarkMode } = useDarkMode();
 
   const navItems = [
     { icon: FolderKanban, title: "Projects", path: "/dashboard" },
@@ -215,6 +219,18 @@ const Sidebar = ({ className }: SidebarProps) => {
           <LogOut className="h-4 w-4" />
           {open && <span className="text-sm font-medium">Logout</span>}
         </Button>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className={cn(
+            "w-full flex items-center rounded-md text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground transition-colors",
+            open ? "gap-3 p-2" : "justify-center p-2"
+          )}
+        >
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {open && <span className="text-sm font-medium">{isDark ? "Light Mode" : "Dark Mode"}</span>}
+        </button>
 
         {/* Toggle Button */}
         <button
