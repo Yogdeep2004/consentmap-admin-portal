@@ -12,11 +12,11 @@ const DashboardLayout = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex min-h-screen w-full bg-background">
+    <div className="flex min-h-screen h-screen w-full bg-background">
       <Sidebar />
-      <div className="flex-1 flex flex-col overflow-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header Bar */}
-        <header className="sticky top-0 z-10 h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 flex items-center justify-between">
+        <header className="sticky top-0 z-10 h-14 shrink-0 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
             {/* Page title could go here */}
           </div>
@@ -28,7 +28,7 @@ const DashboardLayout = () => {
             <AdminHeaderMenu />
           </div>
         </header>
-        <main className="flex-1">
+        <main className="flex-1 overflow-auto">
           <Outlet />
         </main>
       </div>

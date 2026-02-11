@@ -47,28 +47,33 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalName = imageName.trim() || (uploadedFiles.length > 0 ? uploadedFiles[0].name : "");
+    const finalFactor = factor === "custom" ? customFactor.trim() : factor;
 
-    if (!finalName) {
+    if (uploadedFiles.length === 0 && !imageName.trim()) {
       toast({
         title: "Error",
-        description: "Image name is required or upload a file",
+        description: "Upload files or enter an image name",
         variant: "destructive",
       });
       return;
     }
 
-    const finalFactor = factor === "custom" ? customFactor.trim() : factor;
+    const images = uploadedFiles.length > 0
+      ? uploadedFiles.map((file) => ({
+          name: file.name,
+          size: file.size,
+          factor: finalFactor || undefined,
+          batchNumber: batchNumber.trim() || undefined,
+          url: URL.createObjectURL(file),
+        }))
+      : [{
+          name: imageName.trim(),
+          size: 0,
+          factor: finalFactor || undefined,
+          batchNumber: batchNumber.trim() || undefined,
+        }];
 
-    const url = uploadedFiles.length > 0 ? URL.createObjectURL(uploadedFiles[0]) : undefined;
-
-    onSubmit([{
-      name: finalName,
-      size: uploadedFiles.length > 0 ? uploadedFiles[0].size : 0,
-      factor: finalFactor || undefined,
-      batchNumber: batchNumber.trim() || undefined,
-      url,
-    }]);
+    onSubmit(images);
 
     setImageName("");
     setFactor("");
@@ -87,9 +92,9 @@ export function AddImagesModal({ open, onOpenChange, onSubmit }: AddImagesModalP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[525px]">
         <DialogHeader>
-          <DialogTitle>Add Image</DialogTitle>
+          <DialogTitle>Add Images</DialogTitle>
           <DialogDescription>
-            Add a new image to this project.
+            Upload one or more images to this project.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

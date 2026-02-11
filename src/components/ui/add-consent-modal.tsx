@@ -44,9 +44,13 @@ export function AddConsentModal({ open, onOpenChange, onSubmit }: AddConsentModa
       return;
     }
 
+    const fileNames = uploadedFiles.length > 0
+      ? uploadedFiles.map((f) => f.name)
+      : consentFileName.trim() ? [consentFileName.trim()] : [];
+
     onSubmit({
       name: name.trim(),
-      consentFiles: consentFileName.trim() ? [consentFileName.trim()] : [],
+      consentFiles: fileNames,
       consentMatched: false,
     });
 
@@ -57,7 +61,7 @@ export function AddConsentModal({ open, onOpenChange, onSubmit }: AddConsentModa
 
     toast({
       title: "Success",
-      description: "Consent entry added successfully",
+      description: `Consent entry added with ${fileNames.length} file(s)`,
     });
   };
 

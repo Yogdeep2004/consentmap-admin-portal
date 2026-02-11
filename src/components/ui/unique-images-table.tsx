@@ -193,6 +193,7 @@ export function UniqueImagesTable({ images, consentForms, onUpdateImage, classNa
                           className="hidden"
                           ref={(el) => { fileInputRefs.current[image.id] = el; }}
                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          multiple
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) handleConsentUpload(image.id, file);
