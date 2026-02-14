@@ -8,11 +8,12 @@ interface ProjectProgressProps {
 }
 
 export function ProjectProgress({ project, compact = false }: ProjectProgressProps) {
-  const consentsCount = project.persons.filter((p) => p.consentFiles.length > 0).length;
-  const imagesCount = project.images.length + (project.groupImages?.length || 0);
+  const consentsCount = (project.persons ?? []).filter((p) => p.consentFiles?.length > 0).length;
+  const imagesCount = (project.images?.length ?? 0) + (project.groupImages?.length ?? 0);
 
-  const progress = project.estimatedImageCount > 0
-    ? Math.min(100, Math.round((imagesCount / project.estimatedImageCount) * 100))
+  const estimatedCount = project.estimatedImageCount ?? 0;
+  const progress = estimatedCount > 0
+    ? Math.min(100, Math.round((imagesCount / estimatedCount) * 100))
     : 0;
 
   if (compact) {
