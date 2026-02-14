@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
-import { useProjects } from "@/lib/projects";
+import { useProjectsQuery } from "@/hooks/use-projects-query";
 import { usePermissions } from "@/hooks/use-permissions";
 import { RoleBadge } from "@/components/ui/role-badge";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,7 @@ const Sidebar = ({ className }: SidebarProps) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
-  const { projects } = useProjects();
+  const { data: projects = [] } = useProjectsQuery();
   const { canViewLoginHistory } = usePermissions();
   const { isDark, toggleDarkMode } = useDarkMode();
 
@@ -47,7 +47,7 @@ const Sidebar = ({ className }: SidebarProps) => {
 
   // Dynamic stats from projects
   const activeProjects = projects.filter((p) => p.status === "active").length;
-  const totalImages = projects.reduce((acc, p) => acc + p.images.length + (p.groupImages?.length || 0), 0);
+  const totalImages = projects.reduce((acc, p) => acc + (p.estimatedImageCount ?? 0), 0);
 
   const quickStats = [
     { label: "Active Projects", value: activeProjects.toString() },

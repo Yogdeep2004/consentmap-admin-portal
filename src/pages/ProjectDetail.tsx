@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
-import { useProjects } from "@/lib/projects";
+import { useProjectQuery, useDeleteProject } from "@/hooks/use-projects-query";
 import { useAuth } from "@/lib/auth";
 import { usePermissions } from "@/hooks/use-permissions";
 import { Button } from "@/components/ui/button";
@@ -45,19 +45,17 @@ import {
   Image,
   Table,
   Images,
+  Loader2,
 } from "lucide-react";
 
 const ProjectDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProject, updateProject, deleteProject, addPerson, updatePerson, addImage, addEvent, clearEvents, deletePerson, deleteImage } = useProjects();
+  const { data: project, isLoading, error } = useProjectQuery(id || "");
+  const deleteProjectMutation = useDeleteProject();
   const { user } = useAuth();
   const { canEdit, canDelete, canEditConsent } = usePermissions();
   const { toast } = useToast();
-
-  const rawProject = getProject(id || "");
-  // Ensure consentForms exists for projects created before this field was added
-  const project = rawProject ? { ...rawProject, consentForms: rawProject.consentForms || [] } : undefined;
 
   // Modal states
   const [addConsentOpen, setAddConsentOpen] = useState(false);
@@ -66,7 +64,15 @@ const ProjectDetail = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{ type: "image" | "data"; id: string } | null>(null);
 
-  if (!project) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error || !project) {
     return (
       <div className="flex flex-col items-center justify-center h-[50vh]">
         <p className="text-muted-foreground mb-4">Project not found</p>
@@ -75,80 +81,54 @@ const ProjectDetail = () => {
     );
   }
 
+  // Safe access to arrays
+  const images = project.images ?? [];
+  const groupImages = project.groupImages ?? [];
+  const consentForms = project.consentForms ?? [];
+  const persons = project.persons ?? [];
+  const dataEntries = project.dataEntries ?? [];
+  const events = project.events ?? [];
+  const allImages = [...images, ...groupImages];
+
   const handleAddConsent = (data: { name: string; consentFiles: string[]; consentMatched: boolean }) => {
-    addPerson(project.id, {
-      ...data,
-      addedBy: user?.email || "unknown",
-    });
-    addEvent(project.id, {
-      type: "person_added",
-      user: user?.email || "unknown",
-      description: `Added consent for ${data.name}`,
-    });
+    // TODO: Replace with API call when backend supports it
+    toast({ title: "Consent added (API integration pending)" });
   };
 
-  const handleEditPerson = (personId: string, data: Partial<typeof project.persons[0]>) => {
-    updatePerson(project.id, personId, data);
-    addEvent(project.id, {
-      type: "edited",
-      user: user?.email || "unknown",
-      description: `Updated consent status`,
-    });
+  const handleAddImages = (imagesData: { name: string; size: number; factor?: string; batchNumber?: string; url?: string }[]) => {
+    // TODO: Replace with API call when backend supports it
+    toast({ title: "Images added (API integration pending)" });
   };
 
-  const handleAddImages = (images: { name: string; size: number; factor?: string; batchNumber?: string; url?: string }[]) => {
-    images.forEach((img) => {
-      addImage(project.id, {
-        name: img.name,
-        size: img.size,
-        uploadedBy: user?.email || "unknown",
-        factor: img.factor,
-        batchNumber: img.batchNumber,
-        url: img.url,
-      });
-      addEvent(project.id, {
-        type: "image_uploaded",
-        user: user?.email || "unknown",
-        description: `Uploaded ${img.name}${img.factor ? ` (${img.factor})` : ""}`,
-      });
-    });
+  const handleEditProject = (data: any) => {
+    // TODO: Replace with API call when backend supports it
+    toast({ title: "Project updated (API integration pending)" });
   };
 
-  const handleEditProject = (data: Partial<typeof project>) => {
-    updateProject(project.id, data);
-    addEvent(project.id, {
-      type: "edited",
-      user: user?.email || "unknown",
-      description: "Updated project details",
-    });
-  };
-
-  const handleDeleteProject = () => {
-    deleteProject(project.id);
-    toast({ title: "Project deleted" });
-    navigate("/dashboard");
+  const handleDeleteProject = async () => {
+    try {
+      await deleteProjectMutation.mutateAsync(project.id);
+      toast({ title: "Project deleted" });
+      navigate("/dashboard");
+    } catch {
+      toast({ title: "Failed to delete project", variant: "destructive" });
+    }
   };
 
   const handleDeleteItem = () => {
-    if (!itemToDelete) return;
-
-    if (itemToDelete.type === "image") {
-      const image = project.images.find((i) => i.id === itemToDelete.id);
-      deleteImage(project.id, itemToDelete.id);
-      addEvent(project.id, {
-        type: "deleted",
-        user: user?.email || "unknown",
-        description: `Deleted image: ${image?.name}`,
-      });
-    }
-
+    // TODO: Replace with API call when backend supports it
     setItemToDelete(null);
-    toast({ title: "Item deleted" });
+    toast({ title: "Item deleted (API integration pending)" });
   };
 
   const handleClearHistory = () => {
-    clearEvents(project.id);
-    toast({ title: "History cleared" });
+    // TODO: Replace with API call when backend supports it
+    toast({ title: "History cleared (API integration pending)" });
+  };
+
+  const handleEditPerson = (personId: string, data: any) => {
+    // TODO: Replace with API call when backend supports it
+    toast({ title: "Person updated (API integration pending)" });
   };
 
   const getStatusColor = (status: string) => {
@@ -163,8 +143,6 @@ const ProjectDetail = () => {
         return "bg-muted text-muted-foreground";
     }
   };
-
-  const allImages = [...project.images, ...(project.groupImages || [])];
 
   return (
     <div className="p-6 space-y-6">
@@ -184,7 +162,7 @@ const ProjectDetail = () => {
             <p className="text-muted-foreground ml-12">{project.description}</p>
           )}
           <p className="text-sm text-muted-foreground ml-12">
-            Created by: {project.createdBy || project.owner}
+            Created by: {project.createdBy || project.owner || "Unknown"}
           </p>
         </div>
 
@@ -239,10 +217,10 @@ const ProjectDetail = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2">
           <CardContent className="pt-6">
-            <ProjectProgress project={project} />
+            <ProjectProgress project={project as any} />
           </CardContent>
         </Card>
-        <ProjectStatusPanel persons={project.persons} images={allImages} />
+        <ProjectStatusPanel persons={persons} images={allImages} />
       </div>
 
       {/* Main Content Tabs */}
@@ -256,13 +234,12 @@ const ProjectDetail = () => {
             <Images className="h-4 w-4" />
             Unique Images
           </TabsTrigger>
-        <TabsTrigger value="images" className="gap-2">
+          <TabsTrigger value="images" className="gap-2">
             <Image className="h-4 w-4" />
             Images
           </TabsTrigger>
         </TabsList>
 
-        {/* Consent Excel Table Tab */}
         <TabsContent value="consent">
           <Card>
             <CardHeader>
@@ -273,7 +250,7 @@ const ProjectDetail = () => {
             </CardHeader>
             <CardContent>
               <ConsentExcelTable
-                persons={project.persons}
+                persons={persons}
                 images={allImages}
                 onEditPerson={canEditConsent ? handleEditPerson : undefined}
                 onAddImage={() => setAddImagesOpen(true)}
@@ -282,7 +259,6 @@ const ProjectDetail = () => {
           </Card>
         </TabsContent>
 
-        {/* Unique Images Tab */}
         <TabsContent value="unique-images">
           <Card>
             <CardHeader>
@@ -294,13 +270,12 @@ const ProjectDetail = () => {
             <CardContent>
               <UniqueImagesTable
                 images={allImages}
-                consentForms={project.consentForms}
+                consentForms={consentForms}
               />
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Images Tab */}
         <TabsContent value="images">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -355,13 +330,12 @@ const ProjectDetail = () => {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
 
       {/* Modals */}
       <AddConsentModal open={addConsentOpen} onOpenChange={setAddConsentOpen} onSubmit={handleAddConsent} />
       <AddImagesModal open={addImagesOpen} onOpenChange={setAddImagesOpen} onSubmit={handleAddImages} />
-      <EditProjectModal open={editProjectOpen} onOpenChange={setEditProjectOpen} project={project} onSubmit={handleEditProject} />
+      <EditProjectModal open={editProjectOpen} onOpenChange={setEditProjectOpen} project={project as any} onSubmit={handleEditProject} />
 
       {/* Delete Project Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

@@ -8,12 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { useProjects } from "@/lib/projects";
+import { useCreateProject } from "@/hooks/use-projects-query";
 import { useAuth } from "@/lib/auth";
 
 const CreateProject = () => {
   const navigate = useNavigate();
-  const { createProject } = useProjects();
+  const createProjectMutation = useCreateProject();
   const { user } = useAuth();
   
   const [projectName, setProjectName] = useState("");
@@ -40,52 +40,45 @@ const CreateProject = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!projectName.trim()) {
-      toast({
-        title: "Error",
-        description: "Project name is required",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Project name is required", variant: "destructive" });
       return;
     }
 
     if (!createdByUsername.trim()) {
-      toast({
-        title: "Error",
-        description: "Username is required",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Username is required", variant: "destructive" });
       return;
     }
 
     if (piiTypes.length === 0) {
-      toast({
-        title: "Error",
-        description: "Please select at least one PII type",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Please select at least one PII type", variant: "destructive" });
       return;
     }
 
-    const newProject = createProject({
-      name: projectName.trim(),
-      description: description.trim() || notes.trim() || undefined,
-      owner: user?.email || "unknown",
-      createdBy: createdByUsername.trim(),
-      estimatedImageCount: parseInt(imageCount) || 0,
-      cameraTypes,
-      status: "active",
-    });
+    try {
+      const result = await createProjectMutation.mutateAsync({
+        name: projectName.trim(),
+        username: createdByUsername.trim(),
+        target_image_count: parseInt(imageCount) || 0,
+        description: description.trim() || undefined,
+        notes: notes.trim() || undefined,
+        camera_dslr: cameraTypes.includes("dslr"),
+        camera_mobile: cameraTypes.includes("mobile"),
+        pii_face: piiTypes.includes("face"),
+        pii_objects: piiTypes.includes("objects"),
+        pii_document: piiTypes.includes("document"),
+        pii_other: piiTypes.includes("other"),
+        status: "active",
+      });
 
-    toast({
-      title: "Success",
-      description: "Project created successfully!",
-    });
-    
-    navigate(`/project/${newProject.id}`);
+      toast({ title: "Success", description: "Project created successfully!" });
+      navigate(`/project/${result.id}`);
+    } catch {
+      toast({ title: "Error", description: "Failed to create project", variant: "destructive" });
+    }
   };
 
   const cameraTypeOptions = [
@@ -163,7 +156,6 @@ const CreateProject = () => {
                 />
               </div>
 
-              {/* Type of Camera */}
               <div className="space-y-3">
                 <Label>Type of Camera</Label>
                 <div className="flex flex-wrap gap-6">
@@ -196,7 +188,6 @@ const CreateProject = () => {
               />
             </div>
 
-            {/* PII Types */}
             <div className="space-y-3">
               <Label>
                 PII Types <span className="text-destructive">*</span>
@@ -233,8 +224,8 @@ const CreateProject = () => {
         </Card>
 
         <div className="flex gap-4">
-          <Button type="submit" size="lg" className="gap-2">
-            Create Project
+          <Button type="submit" size="lg" className="gap-2" disabled={createProjectMutation.isPending}>
+            {createProjectMutation.isPending ? "Creating..." : "Create Project"}
           </Button>
           <Button
             type="button"

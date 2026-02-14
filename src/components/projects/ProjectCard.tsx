@@ -21,21 +21,20 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ProjectProgress } from "@/components/ui/project-progress";
 import { usePermissions } from "@/hooks/use-permissions";
-import { useProjects } from "@/lib/projects";
+import { useDeleteProject } from "@/hooks/use-projects-query";
 import { useToast } from "@/hooks/use-toast";
-import { Project } from "@/lib/types";
+import { ProjectSummary } from "@/lib/api";
 import { formatDistanceToNow } from "date-fns";
 
 interface ProjectCardProps {
-  project: Project;
+  project: ProjectSummary;
 }
 
 const ProjectCard = ({ project }: ProjectCardProps) => {
   const navigate = useNavigate();
   const { canEdit, canDelete } = usePermissions();
-  const { deleteProject } = useProjects();
+  const deleteProjectMutation = useDeleteProject();
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
@@ -65,25 +64,21 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
     }
   };
 
-  const progress = project.estimatedImageCount > 0
-    ? Math.min(100, Math.round(((project.persons.length + project.dataEntries.length) / project.estimatedImageCount) * 100))
-    : 0;
-
-  const getProgressColor = () => {
-    if (progress === 100) return "bg-success";
-    if (progress >= 50) return "bg-primary";
-    return "bg-warning";
-  };
-
-  const handleDelete = () => {
-    deleteProject(project.id);
-    toast({ title: "Project deleted" });
+  const handleDelete = async () => {
+    try {
+      await deleteProjectMutation.mutateAsync(project.id);
+      toast({ title: "Project deleted" });
+    } catch {
+      toast({ title: "Failed to delete project", variant: "destructive" });
+    }
     setDeleteDialogOpen(false);
   };
 
   const handleCardClick = () => {
     navigate(`/project/${project.id}`);
   };
+
+  const createdAt = project.createdAt ? new Date(project.createdAt) : null;
 
   return (
     <>
@@ -147,32 +142,29 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
           {project.description && (
             <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{project.description}</p>
           )}
-          <p className="text-xs text-muted-foreground mb-3">{project.owner}</p>
+          {project.createdBy && (
+            <p className="text-xs text-muted-foreground mb-3">{project.createdBy}</p>
+          )}
 
-          {/* Progress */}
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-sm text-muted-foreground">Progress</span>
-              <span className={cn("text-sm font-medium", progress === 100 ? "text-success" : "text-foreground")}>
-                {progress}%
+          {/* Summary stats */}
+          <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+            {project.estimatedImageCount != null && (
+              <span className="flex items-center gap-1">
+                <Image className="h-3 w-3" />
+                {project.estimatedImageCount} target
               </span>
-            </div>
-            <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-              <div
-                className={cn("h-full rounded-full transition-all", getProgressColor())}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
+            )}
+            {project.piiTypes && project.piiTypes.length > 0 && (
+              <span>{project.piiTypes.join(", ")}</span>
+            )}
           </div>
-
-          {/* Quick Stats */}
-          <ProjectProgress project={project} compact />
 
           {/* Dates */}
-          <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-            <p>Created: {formatDistanceToNow(project.createdAt, { addSuffix: true })}</p>
-            <p>Last activity: {formatDistanceToNow(project.updatedAt, { addSuffix: true })}</p>
-          </div>
+          {createdAt && (
+            <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+              <p>Created: {formatDistanceToNow(createdAt, { addSuffix: true })}</p>
+            </div>
+          )}
         </div>
       </div>
 

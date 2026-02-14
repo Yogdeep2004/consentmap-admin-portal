@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Filter } from "lucide-react";
+import { Search, Plus, Filter, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,11 +11,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ProjectCard from "@/components/projects/ProjectCard";
-import { useProjects } from "@/lib/projects";
+import { useProjectsQuery } from "@/hooks/use-projects-query";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { projects } = useProjects();
+  const { data: projects = [], isLoading, error } = useProjectsQuery();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -67,14 +67,30 @@ const Dashboard = () => {
         </Button>
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {filteredProjects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
-        ))}
-      </div>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      )}
 
-      {filteredProjects.length === 0 && (
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <p className="text-destructive">Failed to load projects. Make sure the backend is running.</p>
+        </div>
+      )}
+
+      {/* Projects Grid */}
+      {!isLoading && !error && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {filteredProjects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
+        </div>
+      )}
+
+      {!isLoading && !error && filteredProjects.length === 0 && (
         <div className="text-center py-12">
           <p className="text-muted-foreground">No projects found matching your criteria.</p>
         </div>
