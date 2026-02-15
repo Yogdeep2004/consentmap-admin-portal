@@ -13,7 +13,6 @@ import { useAuth } from "@/lib/auth";
 
 const CreateProject = () => {
   const navigate = useNavigate();
-  const { createProject } = useProjects();
   const { user } = useAuth();
   
   const [projectName, setProjectName] = useState("");
@@ -40,9 +39,8 @@ const CreateProject = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!projectName.trim()) {
       toast({
         title: "Error",
@@ -70,23 +68,56 @@ const CreateProject = () => {
       return;
     }
 
-    const newProject = createProject({
+    const payload = {
       name: projectName.trim(),
-      description: description.trim() || notes.trim() || undefined,
-      owner: user?.email || "unknown",
-      createdBy: createdByUsername.trim(),
-      estimatedImageCount: parseInt(imageCount) || 0,
-      cameraTypes,
-      status: "active",
-    });
+      username: createdByUsername.trim(),
+      target_image_count: Number(imageCount) || 0,
+      description: description || null,
+      notes: notes || null,
 
-    toast({
-      title: "Success",
-      description: "Project created successfully!",
-    });
-    
-    navigate(`/project/${newProject.id}`);
+      camera_dslr: cameraTypes.includes("dslr"),
+      camera_mobile: cameraTypes.includes("mobile"),
+
+      pii_face: piiTypes.includes("face"),
+      pii_objects: piiTypes.includes("objects"),
+      pii_document: piiTypes.includes("document"),
+      pii_other: piiTypes.includes("other"),
+
+      status: "active"
+    };
+
+    try {
+      const response = await fetch("http://localhost:8000/api/v1/projects", { //Project Creation API
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        console.error("Backend error:", error);
+        throw new Error("Failed to create project");
+      }
+
+      toast({
+        title: "Success",
+        description: "Project created successfully!",
+      });
+
+      navigate("/dashboard");
+
+
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Unable to reach backend server",
+        variant: "destructive",
+      });
+    }
   };
+
 
   const cameraTypeOptions = [
     { id: "dslr", label: "DSLR" },

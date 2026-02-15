@@ -25,17 +25,17 @@ import { ProjectProgress } from "@/components/ui/project-progress";
 import { usePermissions } from "@/hooks/use-permissions";
 import { useProjects } from "@/lib/projects";
 import { useToast } from "@/hooks/use-toast";
-import { Project } from "@/lib/types";
 import { formatDistanceToNow } from "date-fns";
 
 interface ProjectCardProps {
-  project: Project;
+  project: any;
 }
+
 
 const ProjectCard = ({ project }: ProjectCardProps) => {
   const navigate = useNavigate();
   const { canEdit, canDelete } = usePermissions();
-  const { deleteProject } = useProjects();
+  // const { deleteProject } = useProjects();
   const { toast } = useToast();
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
@@ -65,9 +65,12 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
     }
   };
 
-  const progress = project.estimatedImageCount > 0
-    ? Math.min(100, Math.round(((project.persons.length + project.dataEntries.length) / project.estimatedImageCount) * 100))
-    : 0;
+ const personsCount = project.persons?.length ?? 0;
+ const dataEntriesCount = project.dataEntries?.length ?? 0;
+ const estimated = project.estimatedImageCount ?? 0;
+
+ const progress = estimated > 0 ? Math.min(100, Math.round(((personsCount + dataEntriesCount) / estimated) * 100)) : 0;
+
 
   const getProgressColor = () => {
     if (progress === 100) return "bg-success";
@@ -76,10 +79,10 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
   };
 
   const handleDelete = () => {
-    deleteProject(project.id);
-    toast({ title: "Project deleted" });
+    toast({ title: "Delete not wired to backend yet" });
     setDeleteDialogOpen(false);
   };
+
 
   const handleCardClick = () => {
     navigate(`/project/${project.id}`);
@@ -147,7 +150,10 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
           {project.description && (
             <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{project.description}</p>
           )}
-          <p className="text-xs text-muted-foreground mb-3">{project.owner}</p>
+          <p className="text-xs text-muted-foreground mb-3">
+            {project.createdBy ?? "Unknown"}
+          </p>
+
 
           {/* Progress */}
           <div className="mb-4">
@@ -169,10 +175,15 @@ const ProjectCard = ({ project }: ProjectCardProps) => {
           <ProjectProgress project={project} compact />
 
           {/* Dates */}
-          <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
-            <p>Created: {formatDistanceToNow(project.createdAt, { addSuffix: true })}</p>
-            <p>Last activity: {formatDistanceToNow(project.updatedAt, { addSuffix: true })}</p>
+         <div className="mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
+            {project.createdAt && (
+              <p>
+                Created:{" "}
+                {formatDistanceToNow(new Date(project.createdAt), { addSuffix: true })}
+              </p>
+            )}
           </div>
+
         </div>
       </div>
 
