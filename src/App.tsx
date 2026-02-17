@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import CreateProject from "./pages/CreateProject";
 import ProjectDetail from "./pages/ProjectDetail";
 import DatabaseDetails from "./pages/DatabaseDetails";
+import ImageDetails from "./pages/ImageDetails";
 import RedactionModule from "./pages/RedactionModule";
 import LoginHistory from "./pages/LoginHistory";
 import Settings from "./pages/Settings";
@@ -35,6 +36,7 @@ const App = () => (
                 <Route path="/create-project" element={<CreateProject />} />
                 <Route path="/project/:id" element={<ProjectDetail />} />
                 <Route path="/database-details" element={<DatabaseDetails />} />
+                <Route path="/image-details/:fileName" element={<ImageDetails />} />
                 <Route path="/redaction" element={<RedactionModule />} />
                 <Route path="/login-history" element={<LoginHistory />} />
                 <Route path="/settings" element={<Settings />} />
