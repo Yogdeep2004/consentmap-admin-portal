@@ -175,7 +175,6 @@ src/
 - Adding people, images, consent forms and edits from the project page are built in the interface but not yet connected. They currently report "API integration pending".
 - The redaction module is a layout with placeholder figures, not a working queue.
 - Authentication is a client-side demo. Users, the session and the login audit trail are kept in `localStorage`, and passwords are not hashed. It needs server-side authentication before any real deployment.
-- The API base URL is a constant in the source and should move to an environment variable.
 
 ---
 
